@@ -1,0 +1,29 @@
+# Java
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+*.lock
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Large files
+*.msi
+*.exe
+*.zip
