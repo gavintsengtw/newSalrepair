@@ -29,6 +29,11 @@ tenants:
       username: root
       password: password
       driverClassName: com.mysql.cj.jdbc.Driver
+    - tenantId: default
+      url: jdbc:mysql://192.168.3.31:3306/FY_SALDB
+      username: fongyisa
+      password: F0ngY!$@
+      driverClassName: com.mysql.cj.jdbc.Driver
     # Add more tenants here...
 
 line:
