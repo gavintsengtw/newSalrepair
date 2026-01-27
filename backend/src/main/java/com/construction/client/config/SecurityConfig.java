@@ -26,6 +26,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/users/**").permitAll() // Allow access for testing, secure later
+                        .requestMatchers("/api/repair/**").permitAll() // Allow repair API for now
                         .anyRequest().authenticated())
                 .httpBasic(basic -> {
                 });

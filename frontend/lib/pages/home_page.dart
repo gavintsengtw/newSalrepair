@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
+import 'login_page.dart';
+import 'repair_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -7,209 +11,172 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Row(
-        children: [
-          // Responsive Navigation Rail for larger screens
-          if (MediaQuery.of(context).size.width > 800)
-            NavigationRail(
-              selectedIndex: 0,
-              onDestinationSelected: (int index) {},
-              labelType: NavigationRailLabelType.all,
-              destinations: const [
-                NavigationRailDestination(
-                  icon: Icon(Icons.dashboard_outlined),
-                  selectedIcon: Icon(Icons.dashboard),
-                  label: Text('Dashboard'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.build_outlined),
-                  selectedIcon: Icon(Icons.build),
-                  label: Text('Repairs'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.person_outline),
-                  selectedIcon: Icon(Icons.person),
-                  label: Text('Profile'),
-                ),
-              ],
-            ),
-
-          // Main Content Area
-          Expanded(
-            child: CustomScrollView(
-              slivers: [
-                SliverAppBar.large(
-                  title: const Text('Dashboard')
-                      .animate()
-                      .fadeIn(duration: 600.ms)
-                      .slideX(begin: -0.2, end: 0),
-                  actions: [
-                    IconButton(
-                      icon: const Icon(Icons.notifications_outlined),
-                      onPressed: () {},
-                    ),
-                    const SizedBox(width: 16),
-                    const CircleAvatar(
-                      backgroundImage:
-                          NetworkImage('https://i.pravatar.cc/150?img=12'),
-                    ),
-                    const SizedBox(width: 24),
-                  ],
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.all(24),
-                  sliver: SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 300,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 1.2,
-                    ),
-                    delegate: SliverChildListDelegate([
-                      _buildDashboardCard(
-                        context,
-                        'Active Repairs',
-                        '3',
-                        Icons.handyman,
-                        Colors.orange,
-                      ),
-                      _buildDashboardCard(
-                        context,
-                        'Pending Approval',
-                        '1',
-                        Icons.pending_actions,
-                        Colors.blue,
-                      ),
-                      _buildDashboardCard(
-                        context,
-                        'Completed',
-                        '12',
-                        Icons.check_circle_outline,
-                        Colors.green,
-                      ),
-                      _buildDashboardCard(
-                        context,
-                        'Total Cost',
-                        '\$4,250',
-                        Icons.attach_money,
-                        Colors.purple,
-                      ),
-                    ]),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Recent Activity',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ).animate().fadeIn().slideY(begin: 0.2, end: 0),
-                        const SizedBox(height: 16),
-                        _buildRecentActivityItem(
-                            context, 'Leak Repair', 'Kitchen', '2 hours ago'),
-                        _buildRecentActivityItem(
-                            context, 'Paint Job', 'Living Room', 'Yesterday'),
-                        _buildRecentActivityItem(
-                            context, 'Electric Wiring', 'Garage', '2 days ago'),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+      appBar: AppBar(
+        title: const Text('豐邑客服系統'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {},
           ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: '登出',
+            onPressed: () async {
+              await context.read<UserProvider>().logout();
+              if (context.mounted) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                  (route) => false,
+                );
+              }
+            },
+          ),
+          const SizedBox(width: 16),
         ],
       ),
-      bottomNavigationBar: MediaQuery.of(context).size.width <= 800
-          ? NavigationBar(
-              selectedIndex: 0,
-              onDestinationSelected: (index) {},
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.dashboard_outlined),
-                  selectedIcon: Icon(Icons.dashboard),
-                  label: 'Dashboard',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.build_outlined),
-                  selectedIcon: Icon(Icons.build),
-                  label: 'Repairs',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.person_outline),
-                  selectedIcon: Icon(Icons.person),
-                  label: 'Profile',
-                ),
-              ],
-            )
-          : null,
-    );
-  }
-
-  Widget _buildDashboardCard(BuildContext context, String title, String value,
-      IconData icon, Color color) {
-    return Card(
-      child: InkWell(
-        onTap: () {},
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1200),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    value,
+                    '歡迎回來',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.onSurface,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                  ).animate().fadeIn().slideX(begin: -0.1, end: 0),
+                  const SizedBox(height: 32),
+                  Expanded(
+                    child: LayoutBuilder(builder: (context, constraints) {
+                      // 取得當前可用寬度
+                      final width = constraints.maxWidth;
+                      // 設定斷點：寬度 > 800 顯示 4 列，否則顯示 2 列
+                      final int crossAxisCount = width > 800 ? 4 : 2;
+
+                      return GridView.count(
+                        crossAxisCount: crossAxisCount,
+                        mainAxisSpacing: 24,
+                        crossAxisSpacing: 24,
+                        childAspectRatio: width > 800 ? 1.2 : 1.0,
+                        children: [
+                          _buildMenuButton(
+                            context,
+                            '工程進度',
+                            Icons.construction,
+                            Colors.orange,
+                            () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      _buildPlaceholderPage('工程進度'),
+                                ),
+                              );
+                            },
+                          ),
+                          _buildMenuButton(
+                            context,
+                            '繳款查詢',
+                            Icons.receipt_long,
+                            Colors.blue,
+                            () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      _buildPlaceholderPage('繳款查詢'),
+                                ),
+                              );
+                            },
+                          ),
+                          _buildMenuButton(
+                            context,
+                            '報修服務',
+                            Icons.handyman,
+                            Colors.green,
+                            () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const RepairPage(),
+                                ),
+                              );
+                            },
+                          ),
+                          _buildMenuButton(
+                            context,
+                            '會員中心',
+                            Icons.person,
+                            Colors.purple,
+                            () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      _buildPlaceholderPage('會員中心'),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    }),
                   ),
                 ],
               ),
-            ],
+            ),
           ),
         ),
       ),
-    ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack);
+    );
   }
 
-  Widget _buildRecentActivityItem(
-      BuildContext context, String title, String subtitle, String time) {
+  Widget _buildPlaceholderPage(String title) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: Center(child: Text('$title - 功能開發中')),
+    );
+  }
+
+  Widget _buildMenuButton(BuildContext context, String title, IconData icon,
+      Color color, VoidCallback onTap) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-          child: Icon(Icons.history,
-              color: Theme.of(context).colorScheme.onPrimaryContainer),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 48,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+          ],
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(subtitle),
-        trailing: Text(time, style: Theme.of(context).textTheme.bodySmall),
       ),
-    ).animate().fadeIn().slideX(begin: 0.1, end: 0);
+    ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack);
   }
 }

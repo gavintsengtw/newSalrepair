@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'home_page.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import '../providers/user_provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,54 +15,81 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _accountIdController = TextEditingController();
+  final _accountController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-  String? _errorMessage;
+
+  // 根據平台取得 Base URL
+  String get _baseUrl {
+    if (kIsWeb) return 'http://localhost:8080';
+    if (Platform.isAndroid) return 'http://10.0.2.2:8080';
+    return 'http://localhost:8080';
+  }
+
+  @override
+  void dispose() {
+    _accountController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   Future<void> _login() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
 
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+      try {
+        final uri = Uri.parse('$_baseUrl/api/users/login');
 
-    try {
-      // Replace with your actual backend URL
-      // For Android Emulator use 10.0.2.2, for iOS use localhost, for web use localhost
-      // Assuming running on same machine for dev
-      const String baseUrl = 'http://localhost:8080/api/users/login';
+        // 發送登入請求
+        final response = await http.post(
+          uri,
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode({
+            'accountid': _accountController.text,
+            'password': _passwordController.text,
+          }),
+        );
 
-      final response = await http.post(
-        Uri.parse(baseUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'accountid': _accountIdController.text,
-          'password': _passwordController.text,
-        }),
-      );
+        if (!mounted) return;
 
-      if (response.statusCode == 200) {
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const HomePage()),
+        if (response.statusCode == 200) {
+          // 解析回傳的使用者資料
+          final userData = json.decode(response.body);
+          // 假設後端回傳的 JSON 包含 accountid 欄位
+          final String accountId =
+              userData['accountid'] ?? _accountController.text;
+
+          // 呼叫 UserProvider 的 login 方法更新狀態
+          await context.read<UserProvider>().login(accountId);
+
+          if (!mounted) return;
+
+          // 顯示成功訊息
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('登入成功')),
+          );
+
+          // 不需要手動導航，UserProvider 狀態更新後，
+          // main.dart 中的 AuthCheckWrapper 會自動切換到 HomePage
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('登入失敗：帳號或密碼錯誤')),
           );
         }
-      } else {
-        setState(() {
-          _errorMessage = 'Invalid Account ID or Password';
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Connection error: $e';
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('連線錯誤: $e')),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }
@@ -67,6 +97,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text('登入')),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -78,95 +109,45 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(
-                    Icons.apartment,
-                    size: 80,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+                  const Icon(Icons.account_circle,
+                      size: 100, color: Colors.blue),
                   const SizedBox(height: 32),
-                  Text(
-                    'Welcome Back',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Sign in to your account',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 48),
                   TextFormField(
-                    controller: _accountIdController,
-                    decoration: InputDecoration(
-                      labelText: 'Account ID',
-                      prefixIcon: const Icon(Icons.person_outline),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                    controller: _accountController,
+                    decoration: const InputDecoration(
+                      labelText: '帳號',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.person),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your Account ID';
-                      }
-                      return null;
-                    },
+                    validator: (value) =>
+                        (value == null || value.isEmpty) ? '請輸入帳號' : null,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _passwordController,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                    decoration: const InputDecoration(
+                      labelText: '密碼',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.lock),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
-                      }
-                      return null;
-                    },
+                    obscureText: true,
+                    validator: (value) =>
+                        (value == null || value.isEmpty) ? '請輸入密碼' : null,
                   ),
                   const SizedBox(height: 24),
-                  if (_errorMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16.0),
-                      child: Text(
-                        _errorMessage!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
                   ElevatedButton(
                     onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      textStyle: const TextStyle(fontSize: 18),
                     ),
                     child: _isLoading
                         ? const SizedBox(
-                            height: 20,
-                            width: 20,
+                            height: 24,
+                            width: 24,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text(
-                            'Sign In',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
+                        : const Text('登入'),
                   ),
                 ],
               ),
@@ -175,12 +156,5 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _accountIdController.dispose();
-    _passwordController.dispose();
-    super.dispose();
   }
 }
