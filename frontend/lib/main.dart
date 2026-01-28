@@ -4,6 +4,10 @@ import 'package:provider/provider.dart';
 import 'providers/user_provider.dart';
 import 'pages/login_page.dart';
 import 'pages/home_page.dart';
+import 'pages/member_page.dart';
+
+// 1. 定義全域導航 Key，用於在任何地方控制導航
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() {
   runApp(
@@ -22,6 +26,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey, // 2. 綁定 navigatorKey
       title: 'Construction Client',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -59,8 +64,48 @@ class MyApp extends StatelessWidget {
           shadowColor: Colors.black.withValues(alpha: 0.1),
         ),
       ),
+      // 3. 使用 builder 包裹 AuthListener，監聽登出事件
+      builder: (context, child) {
+        return AuthListener(child: child!);
+      },
       home: const AuthCheckWrapper(),
     );
+  }
+}
+
+// 4. 新增 AuthListener 元件，負責監聽 UserProvider 狀態並處理導航
+class AuthListener extends StatefulWidget {
+  final Widget child;
+  const AuthListener({super.key, required this.child});
+
+  @override
+  State<AuthListener> createState() => _AuthListenerState();
+}
+
+class _AuthListenerState extends State<AuthListener> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<UserProvider>().addListener(_handleAuthChange);
+  }
+
+  @override
+  void dispose() {
+    context.read<UserProvider>().removeListener(_handleAuthChange);
+    super.dispose();
+  }
+
+  void _handleAuthChange() {
+    final userProvider = context.read<UserProvider>();
+    if (!userProvider.isLoggedIn) {
+      // 當偵測到登出 (包含 Token 過期自動登出) 時，清除所有路由堆疊回到首頁 (LoginPage)
+      navigatorKey.currentState?.popUntil((route) => route.isFirst);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
   }
 }
 
@@ -98,7 +143,13 @@ class _AuthCheckWrapperState extends State<AuthCheckWrapper> {
       );
     }
     // 使用 context.watch 監聽 UserProvider，當 isLoggedIn 改變時自動切換頁面
-    final isLoggedIn = context.select<UserProvider, bool>((p) => p.isLoggedIn);
-    return isLoggedIn ? const HomePage() : const LoginPage();
+    final userProvider = context.watch<UserProvider>();
+
+    if (userProvider.isLoggedIn) {
+      // 如果是預設密碼，強制跳轉到會員中心
+      if (userProvider.isDefaultPassword) return const MemberPage();
+      return const HomePage();
+    }
+    return const LoginPage();
   }
 }

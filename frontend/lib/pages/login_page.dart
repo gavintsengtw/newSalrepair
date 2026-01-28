@@ -60,9 +60,15 @@ class _LoginPageState extends State<LoginPage> {
           // 假設後端回傳的 JSON 包含 accountid 欄位
           final String accountId =
               userData['accountid'] ?? _accountController.text;
+          final String token = userData['token'] ?? ''; // 解析 Token
+          final String roles = userData['roles'] ?? '';
+          final String pjnoid = userData['pjnoid'] ?? '';
+          final bool isDefaultPassword = userData['isDefaultPassword'] ?? false;
 
           // 呼叫 UserProvider 的 login 方法更新狀態
-          await context.read<UserProvider>().login(accountId);
+          await context
+              .read<UserProvider>()
+              .login(accountId, token, pjnoid, roles, isDefaultPassword);
 
           if (!mounted) return;
 
@@ -97,7 +103,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('登入')),
+      appBar: AppBar(title: const Text('豐邑客服系統')),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -109,8 +115,10 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(Icons.account_circle,
-                      size: 100, color: Colors.blue),
+                  Image.asset(
+                    'assets/images/logo.png',
+                    height: 120, // Adjust height as needed
+                  ),
                   const SizedBox(height: 32),
                   TextFormField(
                     controller: _accountController,

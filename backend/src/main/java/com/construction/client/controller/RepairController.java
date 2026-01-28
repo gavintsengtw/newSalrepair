@@ -10,7 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.MediaType;
+import org.springframework.cache.annotation.Cacheable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -52,32 +54,55 @@ public class RepairController {
     public List<Map<String, Object>> getContactTypes() {
         System.out.println("DEBUG: 正在取得聯絡人類別...");
         String sql = "SELECT uid, itemid, kindid, kindName FROM salrepairKinds WHERE itemid = 'custtype'";
-        // 使用 RowMapper 明確指定 Key 的名稱，避免資料庫回傳大寫欄位導致前端解析失敗
-        List<Map<String, Object>> results = jdbcTemplate.query(sql, (rs, rowNum) -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put("kindid", rs.getString("kindid"));
-            map.put("kindName", rs.getString("kindName"));
-            return map;
-        });
-        System.out.println("DEBUG: 取得聯絡人類別數量: " + results.size());
-        return results;
+        try {
+            // 使用 RowMapper 明確指定 Key 的名稱，避免資料庫回傳大寫欄位導致前端解析失敗
+            List<Map<String, Object>> results = jdbcTemplate.query(sql, (rs, rowNum) -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("kindid", rs.getString("kindid"));
+                map.put("kindName", rs.getString("kindName"));
+                return map;
+            });
+            System.out.println("DEBUG: 取得聯絡人類別數量: " + results.size());
+
+            if (results.isEmpty()) {
+                System.out.println("DEBUG: 查詢結果為空，嘗試列出所有 itemid...");
+                List<String> itemIds = jdbcTemplate.query("SELECT DISTINCT itemid FROM salrepairKinds",
+                        (rs, rowNum) -> rs.getString("itemid"));
+                System.out.println("DEBUG: salrepairKinds 表中的 itemid: " + itemIds);
+            }
+
+            return results;
+        } catch (Exception e) {
+            System.err.println("ERROR: 取得聯絡人類別失敗: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
     }
 
     // 取得案場名稱 (依據 S_PJNO 從 STORE 資料表讀取 S_NAME)
     @ResponseBody
     @GetMapping("/api/repair/store-info")
+    @Cacheable(value = "storeNames", key = "#pjno != null ? #pjno.trim() : ''")
     public Map<String, String> getStoreInfo(@RequestParam String pjno) {
         String trimmedPjno = pjno != null ? pjno.trim() : "";
         System.out.println("DEBUG: 正在查詢社區名稱 (pjno: " + trimmedPjno + ")");
 
-        // 修改 SQL：對資料庫欄位也進行 TRIM，確保不會因為資料庫中的空白而比對失敗
-        String sql = "SELECT S_NAME FROM STORE WHERE TRIM(S_PJNO) = ?";
+        // 修改 SQL：使用 LTRIM(RTRIM()) 以支援舊版 SQL Server，避免 TRIM 函數不支援導致的錯誤
+        String sql = "SELECT S_NAME FROM STORE WHERE LTRIM(RTRIM(S_PJNO)) = ?";
         Map<String, String> result = new HashMap<>();
         try {
             List<String> names = jdbcTemplate.query(sql, (rs, rowNum) -> rs.getString("S_NAME"), trimmedPjno);
             String name = names.isEmpty() ? "" : names.get(0);
             System.out.println("DEBUG: 查詢結果: " + name);
             result.put("communityName", name);
+
+            if (names.isEmpty()) {
+                System.out.println("DEBUG: 查詢結果為空，嘗試列出所有 S_PJNO...");
+                List<String> pjnos = jdbcTemplate.query("SELECT S_PJNO FROM STORE",
+                        (rs, rowNum) -> rs.getString("S_PJNO"));
+                System.out.println("DEBUG: STORE 表中的 S_PJNO: " + pjnos);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
             result.put("communityName", "");
@@ -110,6 +135,8 @@ public class RepairController {
         if (files != null && !files.isEmpty()) {
             long maxFileSize = 50 * 1024 * 1024; // 限制單一檔案 50MB
             for (MultipartFile file : files) {
+                System.out.println(
+                        "DEBUG: 收到檔案: " + file.getOriginalFilename() + ", ContentType: " + file.getContentType());
                 if (file.getSize() > maxFileSize) {
                     return ResponseEntity.badRequest().body("檔案過大: " + file.getOriginalFilename() + " (限制 50MB)");
                 }

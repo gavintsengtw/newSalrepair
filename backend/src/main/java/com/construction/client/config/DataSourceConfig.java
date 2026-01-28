@@ -26,6 +26,8 @@ public class DataSourceConfig {
     public DataSource dataSource(TenantProperties tenantProperties) {
         Map<Object, Object> targetDataSources = new HashMap<>();
 
+        DataSource defaultDataSource = null;
+
         // Create DataSources for each tenant
         if (tenantProperties.getDatasources() != null) {
             for (TenantProperties.DataSourceProperty property : tenantProperties.getDatasources()) {
@@ -36,6 +38,10 @@ public class DataSourceConfig {
                         .driverClassName(property.getDriverClassName())
                         .build();
                 targetDataSources.put(property.getTenantId(), ds);
+
+                if ("default".equals(property.getTenantId())) {
+                    defaultDataSource = ds;
+                }
             }
         }
 
@@ -44,7 +50,9 @@ public class DataSourceConfig {
 
         // Set a default datasource if needed, or handle the case where no tenant is
         // selected
-        // router.setDefaultTargetDataSource(defaultDataSource);
+        if (defaultDataSource != null) {
+            router.setDefaultTargetDataSource(defaultDataSource);
+        }
 
         router.afterPropertiesSet();
         return router;

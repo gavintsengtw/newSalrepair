@@ -21,4 +21,13 @@ public class User {
 
     @Column(name = "sysdte")
     private java.time.LocalDateTime sysdte;
+
+    @Column(name = "IsDefaultPassword")
+    private Boolean isDefaultPassword;
+
+    @Column(name = "roles")
+    private String roles;
+
+    @Column(name = "pjnoid")
+    private String pjnoid;
 }

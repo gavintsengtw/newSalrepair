@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
-import 'login_page.dart';
 import 'repair_page.dart';
+import 'member_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -23,13 +23,6 @@ class HomePage extends StatelessWidget {
             tooltip: '登出',
             onPressed: () async {
               await context.read<UserProvider>().logout();
-              if (context.mounted) {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginPage()),
-                  (route) => false,
-                );
-              }
             },
           ),
           const SizedBox(width: 16),
@@ -59,71 +52,82 @@ class HomePage extends StatelessWidget {
                       // 設定斷點：寬度 > 800 顯示 4 列，否則顯示 2 列
                       final int crossAxisCount = width > 800 ? 4 : 2;
 
+                      final rolesString = context.watch<UserProvider>().roles;
+                      // 解析角色字串為列表，避免字串包含導致的誤判 (如 AFTER_SALES 包含 SALES)
+                      final roles =
+                          rolesString.split(',').map((e) => e.trim()).toList();
+
                       return GridView.count(
                         crossAxisCount: crossAxisCount,
                         mainAxisSpacing: 24,
                         crossAxisSpacing: 24,
                         childAspectRatio: width > 800 ? 1.2 : 1.0,
                         children: [
-                          _buildMenuButton(
-                            context,
-                            '工程進度',
-                            Icons.construction,
-                            Colors.orange,
-                            () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      _buildPlaceholderPage('工程進度'),
-                                ),
-                              );
-                            },
-                          ),
-                          _buildMenuButton(
-                            context,
-                            '繳款查詢',
-                            Icons.receipt_long,
-                            Colors.blue,
-                            () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      _buildPlaceholderPage('繳款查詢'),
-                                ),
-                              );
-                            },
-                          ),
-                          _buildMenuButton(
-                            context,
-                            '報修服務',
-                            Icons.handyman,
-                            Colors.green,
-                            () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const RepairPage(),
-                                ),
-                              );
-                            },
-                          ),
-                          _buildMenuButton(
-                            context,
-                            '會員中心',
-                            Icons.person,
-                            Colors.purple,
-                            () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      _buildPlaceholderPage('會員中心'),
-                                ),
-                              );
-                            },
-                          ),
+                          if (roles.contains('SALES')) ...[
+                            _buildMenuButton(
+                              context,
+                              '工程進度',
+                              Icons.construction,
+                              Colors.orange,
+                              () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        _buildPlaceholderPage('工程進度'),
+                                  ),
+                                );
+                              },
+                            ),
+                            _buildMenuButton(
+                              context,
+                              '繳款查詢',
+                              Icons.receipt_long,
+                              Colors.blue,
+                              () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        _buildPlaceholderPage('繳款查詢'),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                          if (roles.contains('AFTER_SALES')) ...[
+                            _buildMenuButton(
+                              context,
+                              '報修服務',
+                              Icons.handyman,
+                              Colors.green,
+                              () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const RepairPage(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                          if (roles.contains('SALES') ||
+                              roles.contains('AFTER_SALES')) ...[
+                            _buildMenuButton(
+                              context,
+                              '會員中心',
+                              Icons.person,
+                              Colors.purple,
+                              () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const MemberPage(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ],
                       );
                     }),

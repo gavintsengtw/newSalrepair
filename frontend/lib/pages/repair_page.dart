@@ -9,6 +9,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:video_compress/video_compress.dart';
 import 'package:provider/provider.dart';
+import 'package:http_parser/http_parser.dart';
 import '../providers/user_provider.dart';
 
 class RepairPage extends StatefulWidget {
@@ -59,7 +60,11 @@ class _RepairPageState extends State<RepairPage> {
     try {
       debugPrint('Fetching community name for pjno: $pjno');
       final uri = Uri.parse('$_baseUrl/api/repair/store-info?pjno=$pjno');
-      final response = await http.get(uri);
+
+      // 加入 Authorization Header
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final response = await http.get(uri, headers: userProvider.authHeaders);
+
       debugPrint('Community name response code: ${response.statusCode}');
       debugPrint('Community name response body: ${response.body}');
 
@@ -88,7 +93,11 @@ class _RepairPageState extends State<RepairPage> {
       // 自動切換 Base URL
       final uri = Uri.parse('$_baseUrl/api/repair/contact-types');
       debugPrint('Fetching contact types from: $uri');
-      final response = await http.get(uri);
+
+      // 加入 Authorization Header
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final response = await http.get(uri, headers: userProvider.authHeaders);
+
       debugPrint('Contact types response code: ${response.statusCode}');
 
       if (response.statusCode == 200) {
@@ -272,6 +281,8 @@ class _RepairPageState extends State<RepairPage> {
         final userProvider = Provider.of<UserProvider>(context, listen: false);
 
         var request = http.MultipartRequest('POST', uri);
+        request.headers
+            .addAll(userProvider.authHeaders); // 加入 Authorization Header
         request.fields['pjnoid'] = userProvider.pjno; // 傳送專案代號
         request.fields['communityName'] = _communityNameController.text;
         request.fields['unit'] = _unitController.text;
@@ -283,8 +294,24 @@ class _RepairPageState extends State<RepairPage> {
 
         // 加入選取的檔案
         for (var file in _selectedFiles) {
-          request.files
-              .add(await http.MultipartFile.fromPath('files', file.path));
+          MediaType mediaType = _getMediaType(file
+              .name); // Web uses file.name, Mobile uses file.path but name is safer for extension
+
+          if (kIsWeb) {
+            var bytes = await file.readAsBytes();
+            request.files.add(http.MultipartFile.fromBytes(
+              'files',
+              bytes,
+              filename: file.name,
+              contentType: mediaType,
+            ));
+          } else {
+            request.files.add(await http.MultipartFile.fromPath(
+              'files',
+              file.path,
+              contentType: mediaType,
+            ));
+          }
         }
 
         var streamedResponse = await request.send();
@@ -310,6 +337,17 @@ class _RepairPageState extends State<RepairPage> {
         }
       }
     }
+  }
+
+  MediaType _getMediaType(String filename) {
+    String ext = filename.split('.').last.toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif'].contains(ext)) {
+      return MediaType('image', ext == 'jpg' ? 'jpeg' : ext);
+    }
+    if (['mp4', 'mov', 'avi'].contains(ext)) {
+      return MediaType('video', ext);
+    }
+    return MediaType('application', 'octet-stream');
   }
 
   Future<void> _handleRefresh() async {
@@ -484,12 +522,19 @@ class _RepairPageState extends State<RepairPage> {
                                           child: Icon(Icons.play_circle_outline,
                                               size: 40)),
                                     )
-                                  : Image.file(
-                                      File(file.path),
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                      height: double.infinity,
-                                    ),
+                                  : kIsWeb
+                                      ? Image.network(
+                                          file.path,
+                                          fit: BoxFit.cover,
+                                          width: double.infinity,
+                                          height: double.infinity,
+                                        )
+                                      : Image.file(
+                                          File(file.path),
+                                          fit: BoxFit.cover,
+                                          width: double.infinity,
+                                          height: double.infinity,
+                                        ),
                             ),
                           ),
                           Positioned(
