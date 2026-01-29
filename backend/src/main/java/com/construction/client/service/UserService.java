@@ -27,12 +27,10 @@ public class UserService {
         return userRepository.findById(id);
     }
 
-    @SuppressWarnings("null")
     public User createUser(User user) {
         return userRepository.save(user);
     }
 
-    @SuppressWarnings("null")
     public User updateUser(Long id, User userDetails) {
         return userRepository.findById(id).map(user -> {
             user.setAccountid(userDetails.getAccountid());

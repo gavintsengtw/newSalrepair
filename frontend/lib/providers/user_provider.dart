@@ -33,7 +33,7 @@ class UserProvider with ChangeNotifier {
   }
 
   // 根據平台取得 Base URL
-  String get _baseUrl {
+  String get baseUrl {
     if (kIsWeb) return 'http://localhost:8080';
     if (Platform.isAndroid) return 'http://10.0.2.2:8080';
     return 'http://localhost:8080';
@@ -153,7 +153,7 @@ class UserProvider with ChangeNotifier {
   // 執行 Token 換發
   Future<void> _refreshToken() async {
     try {
-      final uri = Uri.parse('$_baseUrl/api/users/refresh');
+      final uri = Uri.parse('$baseUrl/api/users/refresh');
       // 這裡示範傳送帳號，實際應用中應傳送 Refresh Token 或 Session ID
       final response = await http.post(
         uri,
@@ -199,6 +199,24 @@ class UserProvider with ChangeNotifier {
     } else {
       // _pjno = "";
       _unit = "";
+    }
+  }
+
+  // 更新 FCM Token 到後端 (請在登入成功或 App 啟動時呼叫)
+  Future<void> updateFcmToken(String fcmToken) async {
+    if (!isLoggedIn) return;
+
+    try {
+      // 假設後端有一個接收 Token 的 API，請確保後端有對應的 Controller
+      final uri = Uri.parse('$baseUrl/api/users/fcm-token');
+      await http.post(
+        uri,
+        headers: authHeaders..addAll({'Content-Type': 'application/json'}),
+        body: json.encode({'token': fcmToken}),
+      );
+      debugPrint('FCM Token updated successfully: $fcmToken');
+    } catch (e) {
+      debugPrint('Failed to update FCM token: $e');
     }
   }
 }

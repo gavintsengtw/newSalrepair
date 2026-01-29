@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 public class CacheConfig {
 
     @Bean
-    @SuppressWarnings("null")
     public CacheManager cacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager("storeNames");
         cacheManager.setCaffeine(caffeineCacheBuilder());
