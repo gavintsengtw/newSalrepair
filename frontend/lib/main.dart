@@ -1,23 +1,39 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'providers/user_provider.dart';
 import 'pages/login_page.dart';
 import 'pages/home_page.dart';
 import 'pages/member_page.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:io';
 
 // 1. 定義全域導航 Key，用於在任何地方控制導航
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-void main() {
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => UserProvider()),
-      ],
-      child: const MyApp(),
-    ),
-  );
+Future<void> main() async {
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    try {
+      await dotenv.load(
+          fileName: Platform.isWindows ? ".env.windows" : ".env.mac");
+    } catch (e) {
+      debugPrint("❌ Error loading .env file: $e");
+    }
+
+    runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => UserProvider()),
+        ],
+        child: const MyApp(),
+      ),
+    );
+  }, (error, stack) {
+    debugPrint("❌ Unhandled error: $error");
+    debugPrint("Stack trace: $stack");
+  });
 }
 
 class MyApp extends StatelessWidget {

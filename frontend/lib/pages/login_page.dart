@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../providers/user_provider.dart';
 
 class LoginPage extends StatefulWidget {
@@ -19,12 +17,7 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
-  // 根據平台取得 Base URL
-  String get _baseUrl {
-    if (kIsWeb) return 'http://localhost:8080';
-    if (Platform.isAndroid) return 'http://10.0.2.2:8080';
-    return 'http://localhost:8080';
-  }
+  // 移除本地 _baseUrl getter，改用 UserProvider
 
   @override
   void dispose() {
@@ -40,7 +33,8 @@ class _LoginPageState extends State<LoginPage> {
       });
 
       try {
-        final uri = Uri.parse('$_baseUrl/api/users/login');
+        final baseUrl = context.read<UserProvider>().baseUrl;
+        final uri = Uri.parse('$baseUrl/api/users/login');
 
         // 發送登入請求
         final response = await http.post(

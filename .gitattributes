@@ -1,0 +1,21 @@
+# .gitattributes
+# Set the default behavior, in case people don't have core.autocrlf set.
+* text=auto
+
+# Explicitly declare text files you want to always be normalized and converted
+# to native line endings on checkout.
+*.java text
+*.dart text
+*.xml text
+*.yml text
+*.yaml text
+*.md text
+*.json text
+*.properties text
+*.txt text
+
+# Force shell scripts to LF
+*.sh text eol=lf
+
+# Force PowerShell scripts to CRLF
+*.ps1 text eol=crlf

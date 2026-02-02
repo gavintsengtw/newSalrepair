@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class UserProvider with ChangeNotifier {
   // 模擬登入帳號 (格式: 案場別@戶別)
@@ -34,9 +35,7 @@ class UserProvider with ChangeNotifier {
 
   // 根據平台取得 Base URL
   String get baseUrl {
-    if (kIsWeb) return 'http://localhost:8080';
-    if (Platform.isAndroid) return 'http://10.0.2.2:8080';
-    return 'http://localhost:8080';
+    return dotenv.env['API_URL'] ?? 'http://localhost:8080';
   }
 
   // 取得帶有 Authorization 的 Header (方便 API 呼叫使用)
@@ -90,40 +89,45 @@ class UserProvider with ChangeNotifier {
 
   // 檢查登入狀態 (App 啟動時呼叫)
   Future<bool> checkLoginStatus() async {
-    final String? savedAccount = await _storage.read(key: 'user_account');
-    final String? savedToken = await _storage.read(key: 'auth_token');
-    final String? savedPjnoid = await _storage.read(key: 'user_pjnoid');
-    final String? savedRoles = await _storage.read(key: 'user_roles');
-    final String? savedIsDefaultPwd =
-        await _storage.read(key: 'user_is_default_pwd');
-    final String? expiryStr = await _storage.read(key: 'token_expiry');
+    try {
+      final String? savedAccount = await _storage.read(key: 'user_account');
+      final String? savedToken = await _storage.read(key: 'auth_token');
+      final String? savedPjnoid = await _storage.read(key: 'user_pjnoid');
+      final String? savedRoles = await _storage.read(key: 'user_roles');
+      final String? savedIsDefaultPwd =
+          await _storage.read(key: 'user_is_default_pwd');
+      final String? expiryStr = await _storage.read(key: 'token_expiry');
 
-    if (savedAccount != null &&
-        savedAccount.isNotEmpty &&
-        savedToken != null &&
-        savedToken.isNotEmpty &&
-        expiryStr != null) {
-      final expiry = DateTime.parse(expiryStr);
+      if (savedAccount != null &&
+          savedAccount.isNotEmpty &&
+          savedToken != null &&
+          savedToken.isNotEmpty &&
+          expiryStr != null) {
+        final expiry = DateTime.parse(expiryStr);
 
-      if (expiry.isBefore(DateTime.now())) {
-        // Token 已過期，執行登出
-        await logout();
-        return false;
+        if (expiry.isBefore(DateTime.now())) {
+          // Token 已過期，執行登出
+          await logout();
+          return false;
+        }
+
+        // Token 有效，恢復狀態
+        _account = savedAccount;
+        _token = savedToken;
+        _pjno = savedPjnoid ?? "";
+        _roles = savedRoles ?? "";
+        _isDefaultPassword = savedIsDefaultPwd == 'true';
+        _expiryDate = expiry;
+        _parseAccount();
+        _startTokenRefreshTimer();
+        notifyListeners();
+        return true;
       }
-
-      // Token 有效，恢復狀態
-      _account = savedAccount;
-      _token = savedToken;
-      _pjno = savedPjnoid ?? "";
-      _roles = savedRoles ?? "";
-      _isDefaultPassword = savedIsDefaultPwd == 'true';
-      _expiryDate = expiry;
-      _parseAccount();
-      _startTokenRefreshTimer();
-      notifyListeners();
-      return true;
+      return false;
+    } catch (e) {
+      debugPrint("❌ Error checking login status: $e");
+      return false;
     }
-    return false;
   }
 
   // 啟動 Token 自動換發/登出計時器
