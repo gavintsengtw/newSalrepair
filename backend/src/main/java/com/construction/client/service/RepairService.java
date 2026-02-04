@@ -52,6 +52,9 @@ public class RepairService {
         if (files != null && !files.isEmpty()) {
             saveFiles(sysId, repairId, pjnoid, unoid, files);
         }
+
+        // 4. 發送外部通知
+        sendRepairNotification(repairId, pjnoid, unoid, contactName, content);
     }
 
     /**
@@ -140,6 +143,57 @@ public class RepairService {
         } catch (Exception e) {
             e.printStackTrace();
             return "{\"error\": \"" + e.getMessage() + "\"}";
+        }
+    }
+
+    /**
+     * 發送報修通知
+     */
+    private void sendRepairNotification(String repairId, String pjnoid, String unoid, String custName, String repairMeno) {
+        try {
+            // 1. 取得發送對象 (toUser)
+            String sqlUsers = "SELECT userid FROM salrepairSendtoUser";
+            List<String> users = jdbcTemplate.queryForList(sqlUsers, String.class);
+            if (users.isEmpty()) {
+                System.out.println("DEBUG: 無通知對象，略過發送通知");
+                return;
+            }
+            // 轉小寫並以逗號分隔
+            String toUser = String.join(",", users).toLowerCase();
+
+            // 2. 組合內容 (content)
+            // 格式參考:
+            // [報修通知] 線上報修通知 {repairId}
+            // 案別：{pjnoid} {unoid}
+            // 聯絡人：{custName}
+            // 說明：{repairMeno}
+            StringBuilder contentBuilder = new StringBuilder();
+            contentBuilder.append(String.format("[報修通知]　%s %s", "線上報修通知", repairId)).append("\n");
+            contentBuilder.append(String.format("案別：%s %s", pjnoid, unoid)).append("\n");
+            contentBuilder.append(String.format("聯絡人：%s", custName)).append("\n");
+            contentBuilder.append(String.format("說明：%s", repairMeno));
+
+            String content = contentBuilder.toString();
+            
+            System.out.println("DEBUG: 發送報修通知...");
+            System.out.println("To: " + toUser);
+            System.out.println("Content: " + content);
+
+            // 3. 呼叫外部 API
+            String url = "https://bpm.fong-yi.com.tw/servlet/jform?file=fy_wsSendPIM.pkg&content={content}&toUser={toUser}";
+            
+            Map<String, String> params = new HashMap<>();
+            params.put("content", content);
+            params.put("toUser", toUser);
+
+            RestTemplate restTemplate = new RestTemplate();
+            String response = restTemplate.getForObject(url, String.class, params);
+            
+            System.out.println("DEBUG: 通知發送結果: " + response);
+
+        } catch (Exception e) {
+            System.err.println("ERROR: 發送報修通知失敗: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }
