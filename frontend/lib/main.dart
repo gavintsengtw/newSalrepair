@@ -1,6 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:provider/provider.dart';
 import 'providers/user_provider.dart';
 import 'pages/login_page.dart';
@@ -16,8 +17,15 @@ Future<void> main() async {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
     try {
-      await dotenv.load(
-          fileName: Platform.isWindows ? ".env.windows" : ".env.mac");
+      String envFile = ".env.mac";
+      if (kIsWeb) {
+        envFile = ".env"; // Web fallback or default
+      } else if (Platform.isAndroid) {
+        envFile = ".env.android";
+      } else if (Platform.isWindows) {
+        envFile = ".env.windows";
+      }
+      await dotenv.load(fileName: envFile);
     } catch (e) {
       debugPrint("❌ Error loading .env file: $e");
     }
@@ -54,9 +62,10 @@ class MyApp extends StatelessWidget {
           secondary: const Color(0xFF00BFA5), // Teal Accent
           surface: const Color(0xFFF5F5F7),
         ),
-        textTheme: GoogleFonts.interTextTheme(
-          Theme.of(context).textTheme,
-        ),
+        // textTheme: GoogleFonts.interTextTheme(
+        //   Theme.of(context).textTheme,
+        // ),
+        textTheme: Theme.of(context).textTheme,
         appBarTheme: const AppBarTheme(
           centerTitle: true,
           elevation: 0,

@@ -110,7 +110,17 @@ class _MemberPageState extends State<MemberPage> {
         context.select<UserProvider, bool>((p) => p.isDefaultPassword);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('會員中心')),
+      appBar: AppBar(
+        title: const Text('會員中心'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              context.read<UserProvider>().logout();
+            },
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(

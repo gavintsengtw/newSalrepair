@@ -48,4 +48,23 @@ public class AuthController {
             return ResponseEntity.status(401).body("Invalid credentials");
         }
     }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> request) {
+        String accountid = request.get("accountid");
+        String oldPassword = request.get("oldPassword");
+        String newPassword = request.get("newPassword");
+
+        if (accountid == null || oldPassword == null || newPassword == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Missing required fields"));
+        }
+
+        boolean success = userService.changePassword(accountid, oldPassword, newPassword);
+
+        if (success) {
+            return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
+        } else {
+            return ResponseEntity.status(400).body(Map.of("message", "Invalid old password or account not found"));
+        }
+    }
 }

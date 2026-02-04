@@ -52,8 +52,61 @@ class _RepairPageState extends State<RepairPage> {
       _unitController.text = userProvider.unit;
       if (userProvider.pjno.isNotEmpty) {
         _fetchCommunityName(userProvider.pjno);
+        _fetchRepairAddress(userProvider.pjno, userProvider.unit);
       }
     });
+  }
+
+  Future<void> _fetchRepairAddress(String pjno, String unit) async {
+    try {
+      debugPrint('Fetching address for pjno: $pjno, unit: $unit');
+      // 注意: 後端 API 參數名稱為 repairStord (對應 pjno) 和 repairUno (對應 unit)
+      final uri = Uri.parse(
+          '$_baseUrl/api/repair/address?repairStord=$pjno&repairUno=$unit');
+
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final response = await http.get(uri, headers: userProvider.authHeaders);
+
+      debugPrint('Address response code: ${response.statusCode}');
+      debugPrint('Address response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        // 假設後端直接回傳地址字串 (如果回傳 JSON 需解析)
+        // 這裡後端回傳的是 JSON 格式: {"error": ...} 或 直接字串?
+        // 根據 Controller: return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(result);
+        // 如果 result 是純字串，前端視為 JSON 字串解析可能會出錯，如果 result 本身是 JSON 格式字串則沒問題
+        // 根據 RepairService，它直接回傳 RestTemplate 的結果，通常是 String
+
+        // 嘗試解析 JSON
+        try {
+          String address = response.body;
+
+          // 嘗試解析 JSON
+          try {
+            final jsonBody = json.decode(response.body);
+            if (jsonBody is Map) {
+              if (jsonBody.containsKey('addrs')) {
+                address = jsonBody['addrs'];
+              } else if (jsonBody.containsKey('error')) {
+                debugPrint('Address fetch error: ${jsonBody['error']}');
+                // 如果有錯誤訊息，也可以選擇清除地址或顯示錯誤
+                // address = '';
+              }
+            }
+          } catch (_) {
+            // 非 JSON，視為 plain text address - 維持原狀
+          }
+
+          setState(() {
+            _addressController.text = address;
+          });
+        } catch (e) {
+          debugPrint('Address parse error: $e');
+        }
+      }
+    } catch (e) {
+      debugPrint('無法取得地址 error: $e');
+    }
   }
 
   Future<void> _fetchCommunityName(String pjno) async {
@@ -449,10 +502,12 @@ class _RepairPageState extends State<RepairPage> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _addressController,
+                  readOnly: true, // 設定為唯讀，因為是由 API 自動帶入
                   decoration: const InputDecoration(
                     labelText: '地址',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.home),
+                    filled: true,
                   ),
                   validator: (value) =>
                       (value == null || value.isEmpty) ? '請輸入地址' : null,

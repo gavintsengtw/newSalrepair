@@ -63,4 +63,18 @@ public class UserService {
         }
         return null;
     }
+    public boolean changePassword(String accountid, String oldPassword, String newPassword) {
+        Optional<User> userOpt = userRepository.findByAccountid(accountid);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            // Verify old password
+            if (user.getPassword().trim().equals(oldPassword.trim())) {
+                user.setPassword(newPassword);
+                user.setIsDefaultPassword(false); // Reset default password flag
+                userRepository.save(user);
+                return true;
+            }
+        }
+        return false;
+    }
 }

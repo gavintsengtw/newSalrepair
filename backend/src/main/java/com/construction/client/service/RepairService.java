@@ -6,6 +6,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
 import java.io.IOException;
@@ -127,5 +128,18 @@ public class RepairService {
             e.printStackTrace();
         }
         return request;
+    }
+
+    // 新增：取得戶別地址
+    public String getRepairUnoAddr(String repairStord, String repairUno) {
+        String url = "https://bpm.fong-yi.com.tw/servlet/jform?file=fy_wsSendPIM.pkg&buttonid=getRepairUnoAddr&repairStord=" 
+                + repairStord + "&repairUno=" + repairUno;
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            return restTemplate.getForObject(url, String.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "{\"error\": \"" + e.getMessage() + "\"}";
+        }
     }
 }

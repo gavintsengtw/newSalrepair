@@ -160,4 +160,15 @@ public class RepairController {
             return ResponseEntity.status(500).body("報修單建立失敗: " + e.getMessage());
         }
     }
+
+    // 新增：取得戶別地址
+    @ResponseBody
+    @GetMapping("/api/repair/address")
+    public ResponseEntity<String> getRepairAddress(@RequestParam String repairStord, @RequestParam String repairUno) {
+        String result = repairService.getRepairUnoAddr(repairStord, repairUno);
+        // 設定回傳為 JSON 格式
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(result);
+    }
 }

@@ -47,3 +47,5 @@ flutter:
     - assets/images/
     - .env.mac
     - .env.windows
+    - .env.android
+    - .env
