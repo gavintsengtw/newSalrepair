@@ -16,7 +16,7 @@ public class LineBotController {
 
     @EventMapping
     public void handleTextMessageEvent(MessageEvent event) {
-        System.out.println("event: " + event);
+        // System.out.println("event: " + event);
         if (event.message() instanceof TextMessageContent) {
             lineMessageService.handleTextMessage(event);
         }
@@ -24,6 +24,6 @@ public class LineBotController {
 
     @EventMapping
     public void handleDefaultMessageEvent(Event event) {
-        System.out.println("event: " + event);
+        // System.out.println("event: " + event);
     }
 }

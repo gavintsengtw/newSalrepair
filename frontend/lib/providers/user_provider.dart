@@ -4,7 +4,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+import '../config.dart';
 
 class UserProvider with ChangeNotifier {
   // 模擬登入帳號 (格式: 案場別@戶別)
@@ -35,7 +36,7 @@ class UserProvider with ChangeNotifier {
 
   // 根據平台取得 Base URL
   String get baseUrl {
-    return dotenv.env['API_URL'] ?? 'http://localhost:8080';
+    return AppConfig.apiUrl;
   }
 
   // 取得帶有 Authorization 的 Header (方便 API 呼叫使用)

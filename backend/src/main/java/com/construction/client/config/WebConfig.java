@@ -1,30 +1,22 @@
 package com.construction.client.config;
 
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.lang.NonNull;
+
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.boot.web.server.MimeMappings;
+import org.springframework.boot.web.server.WebServerFactoryCustomizer;
+import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
+import org.springframework.context.annotation.Bean;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @NonNull
-    private final TenantInterceptor tenantInterceptor;
-
-    public WebConfig(@NonNull TenantInterceptor tenantInterceptor) {
-        this.tenantInterceptor = tenantInterceptor;
-    }
-
-    @Override
-    public void addInterceptors(@NonNull InterceptorRegistry registry) {
-        registry.addInterceptor(tenantInterceptor);
-    }
-
-    @Override
-    public void addCorsMappings(@NonNull org.springframework.web.servlet.config.annotation.CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOrigins("*") // Allow all origins for development
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*");
+    @Bean
+    public WebServerFactoryCustomizer<ConfigurableServletWebServerFactory> mimeMappingsCustomizer() {
+        return container -> {
+            MimeMappings mappings = new MimeMappings(MimeMappings.DEFAULT);
+            mappings.add("wasm", "application/wasm");
+            container.setMimeMappings(mappings);
+        };
     }
 }

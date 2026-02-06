@@ -9,7 +9,6 @@ import com.google.firebase.messaging.Notification;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Map;
 
@@ -21,19 +20,25 @@ public class FcmService {
     public void initialize() {
         try {
             if (FirebaseApp.getApps().isEmpty()) {
-                // 請確保 firebase-service-account.json 位於專案根目錄或指定路徑
-                FileInputStream serviceAccount = new FileInputStream("firebase-service-account.json");
+                // 改為從 Classpath 讀取 (src/main/resources)
+                try (java.io.InputStream serviceAccount = getClass().getClassLoader()
+                        .getResourceAsStream("firebase-service-account.json")) {
+                    if (serviceAccount == null) {
+                        System.err
+                                .println("Firebase config file not found in classpath: firebase-service-account.json");
+                        return;
+                    }
 
-                FirebaseOptions options = FirebaseOptions.builder()
-                        .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                        .build();
+                    FirebaseOptions options = FirebaseOptions.builder()
+                            .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                            .build();
 
-                FirebaseApp.initializeApp(options);
-                System.out.println("Firebase application has been initialized");
+                    FirebaseApp.initializeApp(options);
+                    // System.out.println("Firebase application has been initialized");
+                }
             }
         } catch (IOException e) {
             System.err.println("Firebase initialization failed: " + e.getMessage());
-            // 在開發環境若無憑證檔，可選擇不拋出例外以免影響其他功能啟動
         }
     }
 

@@ -30,7 +30,7 @@ tenants:
       password: password
       driverClassName: com.microsoft.sqlserver.jdbc.SQLServerDriver
     - tenantId: default
-      url: jdbc:sqlserver://192.168.68.125:1433;databaseName=FY_SALDB;encrypt=false;trustServerCertificate=true
+      url: jdbc:sqlserver://192.168.110.193:1433;databaseName=FY_SALDB;encrypt=false;trustServerCertificate=true
       username: fongyisa
       password: F0ngY!$@
       driverClassName: com.microsoft.sqlserver.jdbc.SQLServerDriver

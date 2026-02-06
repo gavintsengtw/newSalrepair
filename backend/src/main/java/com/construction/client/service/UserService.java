@@ -44,25 +44,27 @@ public class UserService {
     }
 
     public User login(String accountid, String password) {
-        System.out.println("Attempting login for accountid: [" + accountid + "]");
+        // System.out.println("Attempting login for accountid: [" + accountid + "]");
         Optional<User> userOpt = userRepository.findByAccountid(accountid);
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-            System.out.println("User found in DB: [" + user.getAccountid() + "]");
-            System.out.println("DB Password: [" + user.getPassword() + "]");
-            System.out.println("Input Password: [" + password + "]");
+            // System.out.println("User found in DB: [" + user.getAccountid() + "]");
+            // System.out.println("DB Password: [" + user.getPassword() + "]");
+            // System.out.println("Input Password: [" + password + "]");
 
             // Use trim() in case of trailing spaces in DB
             boolean match = user.getPassword().trim().equals(password.trim());
-            System.out.println("Password match: " + match);
+            // System.out.println("Password match: " + match);
 
             if (match)
                 return user;
         } else {
-            System.out.println("User NOT found in DB for accountid: [" + accountid + "]");
+            // System.out.println("User NOT found in DB for accountid: [" + accountid +
+            // "]");
         }
         return null;
     }
+
     public boolean changePassword(String accountid, String oldPassword, String newPassword) {
         Optional<User> userOpt = userRepository.findByAccountid(accountid);
         if (userOpt.isPresent()) {

@@ -1,9 +1,10 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+import '../config.dart';
 
 class ApiClient {
   final Dio _dio = Dio(BaseOptions(
-    baseUrl: dotenv.env['API_URL'] ?? 'http://localhost:8080/api', // Fallback
+    baseUrl: '${AppConfig.apiUrl}/api',
     connectTimeout: const Duration(seconds: 5),
     receiveTimeout: const Duration(seconds: 3),
   ));

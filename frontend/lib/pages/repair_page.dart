@@ -11,6 +11,7 @@ import 'package:video_compress/video_compress.dart';
 import 'package:provider/provider.dart';
 import 'package:http_parser/http_parser.dart';
 import '../providers/user_provider.dart';
+import '../config.dart';
 
 class RepairPage extends StatefulWidget {
   const RepairPage({super.key});
@@ -135,9 +136,7 @@ class _RepairPageState extends State<RepairPage> {
   }
 
   String get _baseUrl {
-    if (kIsWeb) return 'http://localhost:8080';
-    if (Platform.isAndroid) return 'http://10.0.2.2:8080';
-    return 'http://localhost:8080';
+    return AppConfig.apiUrl;
   }
 
   Future<void> _fetchContactTypes() async {

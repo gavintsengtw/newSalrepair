@@ -7,7 +7,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -29,10 +28,10 @@ public class SmsController {
             @RequestParam String statusstr,
             @RequestParam String StatusFlag) {
 
-        System.out.println("Received SMS Callback: " + LocalDateTime.now());
-        System.out.println("msgid: " + msgid);
-        System.out.println("dstaddr: " + dstaddr);
-        System.out.println("statusstr: " + statusstr);
+        // System.out.println("Received SMS Callback: " + LocalDateTime.now());
+        // System.out.println("msgid: " + msgid);
+        // System.out.println("dstaddr: " + dstaddr);
+        // System.out.println("statusstr: " + statusstr);
 
         SendSmsResponse data = new SendSmsResponse();
         data.setMsgid(msgid);

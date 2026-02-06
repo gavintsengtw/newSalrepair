@@ -5,10 +5,18 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.cache.annotation.EnableCaching;
 
+import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+
 // Exclude DataSourceAutoConfiguration because we will configure it manually for multi-tenancy
 @SpringBootApplication(exclude = { DataSourceAutoConfiguration.class })
 @EnableCaching
-public class ClientApiApplication {
+public class ClientApiApplication extends SpringBootServletInitializer {
+
+	@Override
+	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+		return application.sources(ClientApiApplication.class);
+	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(ClientApiApplication.class, args);
@@ -18,24 +26,25 @@ public class ClientApiApplication {
 	public org.springframework.boot.CommandLineRunner commandLineRunner(
 			com.construction.client.repository.UserRepository userRepository) {
 		return args -> {
-			System.out.println("----------------------------------------------------------");
-			System.out.println("STARTUP DB CHECK:");
+			// System.out.println("----------------------------------------------------------");
+			// System.out.println("STARTUP DB CHECK:");
 			try {
 				// Set default tenant for this check
 				com.construction.client.config.TenantContext.setTenantId("default");
 				long count = userRepository.count();
-				System.out.println("Successfully connected to DB. User count: " + count);
+				// System.out.println("Successfully connected to DB. User count: " + count);
 
 				if (count > 0) {
-					System.out.println("First user found: " + userRepository.findAll().get(0).getAccountid());
+					// System.out.println("First user found: " +
+					// userRepository.findAll().get(0).getAccountid());
 				} else {
-					System.out.println("WARNING: No users found in the database!");
+					// System.out.println("WARNING: No users found in the database!");
 				}
 			} catch (Exception e) {
-				System.out.println("ERROR connecting to DB: " + e.getMessage());
+				// System.out.println("ERROR connecting to DB: " + e.getMessage());
 				e.printStackTrace();
 			}
-			System.out.println("----------------------------------------------------------");
+			// System.out.println("----------------------------------------------------------");
 		};
 	}
 

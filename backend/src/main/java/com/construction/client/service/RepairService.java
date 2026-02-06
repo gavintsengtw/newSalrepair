@@ -135,7 +135,7 @@ public class RepairService {
 
     // 新增：取得戶別地址
     public String getRepairUnoAddr(String repairStord, String repairUno) {
-        String url = "https://bpm.fong-yi.com.tw/servlet/jform?file=fy_wsSendPIM.pkg&buttonid=getRepairUnoAddr&repairStord=" 
+        String url = "https://bpm.fong-yi.com.tw/servlet/jform?file=fy_wsSendPIM.pkg&buttonid=getRepairUnoAddr&repairStord="
                 + repairStord + "&repairUno=" + repairUno;
         RestTemplate restTemplate = new RestTemplate();
         try {
@@ -149,13 +149,14 @@ public class RepairService {
     /**
      * 發送報修通知
      */
-    private void sendRepairNotification(String repairId, String pjnoid, String unoid, String custName, String repairMeno) {
+    private void sendRepairNotification(String repairId, String pjnoid, String unoid, String custName,
+            String repairMeno) {
         try {
             // 1. 取得發送對象 (toUser)
             String sqlUsers = "SELECT userid FROM salrepairSendtoUser";
             List<String> users = jdbcTemplate.queryForList(sqlUsers, String.class);
             if (users.isEmpty()) {
-                System.out.println("DEBUG: 無通知對象，略過發送通知");
+                // System.out.println("DEBUG: 無通知對象，略過發送通知");
                 return;
             }
             // 轉小寫並以逗號分隔
@@ -174,22 +175,22 @@ public class RepairService {
             contentBuilder.append(String.format("說明：%s", repairMeno));
 
             String content = contentBuilder.toString();
-            
-            System.out.println("DEBUG: 發送報修通知...");
-            System.out.println("To: " + toUser);
-            System.out.println("Content: " + content);
+
+            // System.out.println("DEBUG: 發送報修通知...");
+            // System.out.println("To: " + toUser);
+            // System.out.println("Content: " + content);
 
             // 3. 呼叫外部 API
             String url = "https://bpm.fong-yi.com.tw/servlet/jform?file=fy_wsSendPIM.pkg&content={content}&toUser={toUser}";
-            
+
             Map<String, String> params = new HashMap<>();
             params.put("content", content);
             params.put("toUser", toUser);
 
             RestTemplate restTemplate = new RestTemplate();
-            String response = restTemplate.getForObject(url, String.class, params);
-            
-            System.out.println("DEBUG: 通知發送結果: " + response);
+            restTemplate.getForObject(url, String.class, params);
+
+            // System.out.println("DEBUG: 通知發送結果: " + response);
 
         } catch (Exception e) {
             System.err.println("ERROR: 發送報修通知失敗: " + e.getMessage());
