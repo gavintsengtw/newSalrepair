@@ -25,6 +25,8 @@ Future<void> main() async {
         envFile = ".env.android";
       } else if (Platform.isWindows) {
         envFile = ".env.windows";
+      } else if (Platform.isIOS) {
+        envFile = ".env.ios";
       }
       await dotenv.load(fileName: envFile);
     } catch (e) {

@@ -66,18 +66,19 @@ class UserProvider with ChangeNotifier {
     _expiryDate = DateTime.now().add(const Duration(hours: 24));
     _startTokenRefreshTimer();
 
-    await _storage.write(
-        key: 'token_expiry', value: _expiryDate!.toIso8601String());
+    // await _storage.write(
+    //     key: 'token_expiry', value: _expiryDate!.toIso8601String());
 
     // Fetch projects after login
     await fetchUserProjects();
 
-    await _storage.write(key: 'user_account', value: account);
-    await _storage.write(key: 'auth_token', value: token);
-    await _storage.write(key: 'user_pjnoid', value: pjnoid);
-    await _storage.write(key: 'user_roles', value: roles);
-    await _storage.write(
-        key: 'user_is_default_pwd', value: isDefaultPassword.toString());
+    // Disable persistence for "Login on App Restart" requirement
+    // await _storage.write(key: 'user_account', value: account);
+    // await _storage.write(key: 'auth_token', value: token);
+    // await _storage.write(key: 'user_pjnoid', value: pjnoid);
+    // await _storage.write(key: 'user_roles', value: roles);
+    // await _storage.write(
+    //     key: 'user_is_default_pwd', value: isDefaultPassword.toString());
   }
 
   // 清除使用者資訊 (登出時呼叫)
@@ -106,6 +107,9 @@ class UserProvider with ChangeNotifier {
 
   // 檢查登入狀態 (App 啟動時呼叫)
   Future<bool> checkLoginStatus() async {
+    // Disable auto-login: Always return false to require login on restart
+    return false;
+    /*
     try {
       final String? savedAccount = await _storage.read(key: 'user_account');
       final String? savedToken = await _storage.read(key: 'auth_token');
@@ -152,6 +156,7 @@ class UserProvider with ChangeNotifier {
       debugPrint("❌ Error checking login status: $e");
       return false;
     }
+    */
   }
 
   // 啟動 Token 自動換發/登出計時器
@@ -197,9 +202,9 @@ class UserProvider with ChangeNotifier {
         _expiryDate =
             DateTime.now().add(const Duration(hours: 24)); // 或解析 data['expiry']
 
-        await _storage.write(key: 'auth_token', value: newToken);
-        await _storage.write(
-            key: 'token_expiry', value: _expiryDate!.toIso8601String());
+        // await _storage.write(key: 'auth_token', value: newToken);
+        // await _storage.write(
+        //     key: 'token_expiry', value: _expiryDate!.toIso8601String());
         _startTokenRefreshTimer(); // 重新啟動計時器
         notifyListeners();
       } else {
@@ -262,8 +267,8 @@ class UserProvider with ChangeNotifier {
     // _unit = _currentUnit;
 
     notifyListeners();
-    // Persist selection
-    await _storage.write(key: 'current_sid', value: _currentSid);
+    // Persist selection - Disabled
+    // await _storage.write(key: 'current_sid', value: _currentSid);
   }
 
   // Clear selection to return to selector
@@ -279,8 +284,8 @@ class UserProvider with ChangeNotifier {
   Future<void> updatePasswordStatus(bool isDefault) async {
     _isDefaultPassword = isDefault;
     notifyListeners();
-    await _storage.write(
-        key: 'user_is_default_pwd', value: isDefault.toString());
+    // await _storage.write(
+    //     key: 'user_is_default_pwd', value: isDefault.toString());
   }
 
   void _parseAccount() {

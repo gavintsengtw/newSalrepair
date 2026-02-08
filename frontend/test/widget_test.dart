@@ -11,20 +11,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:construction_client/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  testWidgets('App launch smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
+    // Note: This test will fail if .env loading or Provider setup is not handled correctly in test environment.
+    // Ideally we should mock dependencies, but for now we just want to ensure it doesn't crash on launch.
     await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify that we are at least showing something (likely login page or loading)
+    expect(find.byType(MaterialApp), findsOneWidget);
   });
 }

@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import 'repair_page.dart';
 import 'member_page.dart';
-import 'project_selector_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -27,11 +26,8 @@ class HomePage extends StatelessWidget {
                 // 回到選擇頁清空選擇 (或是直接回去讓使用者重選)
                 // 這裡選擇直接跳轉ProjectSelectorPage，在裡面選擇後會覆蓋
                 provider.clearProjectSelection();
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(
-                      builder: (_) => const ProjectSelectorPage()),
-                  (route) => false,
-                );
+                // 回到選擇頁清空選擇 (AuthCheckWrapper 會自動切換頁面)
+                provider.clearProjectSelection();
               },
               child: Row(
                 mainAxisSize: MainAxisSize.min,

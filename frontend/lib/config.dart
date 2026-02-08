@@ -29,4 +29,12 @@ class AppConfig {
     String url = 'https://10.0.2.2:8080';
     return url;
   }
+
+  static String? get httpProxy {
+    final proxy = dotenv.env['HTTP_PROXY'];
+    if (proxy != null && proxy.isNotEmpty) {
+      return proxy;
+    }
+    return null;
+  }
 }

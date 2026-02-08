@@ -12,6 +12,8 @@ import 'package:provider/provider.dart';
 import 'package:http_parser/http_parser.dart';
 import '../providers/user_provider.dart';
 import '../config.dart';
+import 'package:speech_to_text/speech_to_text.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
 
 class RepairPage extends StatefulWidget {
   const RepairPage({super.key});
@@ -42,9 +44,16 @@ class _RepairPageState extends State<RepairPage> {
   List<Map<String, String>> _contactTypes = [];
   bool _isLoadingContactTypes = true;
 
+  // 語音辨識相關
+  final SpeechToText _speechToText = SpeechToText();
+  bool _speechEnabled = false;
+  bool _isListening = false;
+  String _textBeforeListening = '';
+
   @override
   void initState() {
     super.initState();
+    _initSpeech();
     _fetchContactTypes();
 
     // 透過 Provider 取得使用者資訊 (需在畫面建構後執行)
@@ -258,42 +267,98 @@ class _RepairPageState extends State<RepairPage> {
     }
   }
 
-  // 選取多張照片
-  Future<void> _pickImages() async {
-    final List<XFile> images = await _picker.pickMultiImage();
-    if (images.isNotEmpty) {
-      List<XFile> validImages = [];
-      bool hasOversizedFile = false;
-
-      for (var image in images) {
-        // 嘗試壓縮圖片
-        XFile? processedImage = await _compressImage(image);
-
-        if (processedImage != null &&
-            await processedImage.length() <= _maxFileSize) {
-          validImages.add(processedImage);
-        } else {
-          hasOversizedFile = true;
-        }
-      }
-
-      if (hasOversizedFile && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('部分圖片超過 50MB 限制，已略過')),
+  // 顯示媒體來源選擇對話框
+  Future<void> _showMediaSourceDialog(bool isVideo) async {
+    await showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: Text(isVideo ? '拍攝影片' : '拍攝照片'),
+                onTap: () {
+                  Navigator.pop(context);
+                  if (isVideo) {
+                    _pickVideo(ImageSource.camera);
+                  } else {
+                    _pickImage(ImageSource.camera);
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: Text(isVideo ? '從相簿選取影片' : '從相簿選取照片'),
+                onTap: () {
+                  Navigator.pop(context);
+                  if (isVideo) {
+                    _pickVideo(ImageSource.gallery);
+                  } else {
+                    _pickImage(ImageSource.gallery);
+                  }
+                },
+              ),
+            ],
+          ),
         );
-      }
+      },
+    );
+  }
 
-      if (validImages.isNotEmpty) {
-        setState(() {
-          _selectedFiles.addAll(validImages);
-        });
+  // 選取照片 (支援相機與相簿)
+  Future<void> _pickImage(ImageSource source) async {
+    List<XFile> images = [];
+    if (source == ImageSource.gallery) {
+      images = await _picker.pickMultiImage();
+    } else {
+      final XFile? image = await _picker.pickImage(source: source);
+      if (image != null) {
+        images.add(image);
       }
+    }
+
+    if (images.isNotEmpty) {
+      _processSelectedImages(images);
     }
   }
 
-  // 選取影片
-  Future<void> _pickVideo() async {
-    final XFile? video = await _picker.pickVideo(source: ImageSource.gallery);
+  Future<void> _processSelectedImages(List<XFile> images) async {
+    List<XFile> validImages = [];
+    bool hasOversizedFile = false;
+
+    for (var image in images) {
+      // 嘗試壓縮圖片
+      XFile? processedImage = await _compressImage(image);
+
+      if (processedImage != null &&
+          await processedImage.length() <= _maxFileSize) {
+        validImages.add(processedImage);
+      } else {
+        hasOversizedFile = true;
+      }
+    }
+
+    if (hasOversizedFile && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('部分圖片超過 50MB 限制，已略過')),
+      );
+    }
+
+    if (validImages.isNotEmpty) {
+      setState(() {
+        _selectedFiles.addAll(validImages);
+      });
+    }
+  }
+
+  // 選取影片 (支援相機與相簿)
+  Future<void> _pickVideo(ImageSource source) async {
+    final XFile? video = await _picker.pickVideo(source: source);
     if (video != null) {
       // 顯示處理中提示
       if (mounted) {
@@ -417,6 +482,50 @@ class _RepairPageState extends State<RepairPage> {
     await Future.wait(tasks);
   }
 
+  // 初始化語音辨識
+  void _initSpeech() async {
+    try {
+      _speechEnabled = await _speechToText.initialize();
+      if (mounted) setState(() {});
+    } catch (e) {
+      debugPrint('語音辨識初始化失敗: $e');
+    }
+  }
+
+  // 開始錄音
+  void _startListening() async {
+    _textBeforeListening = _contentController.text;
+    await _speechToText.listen(
+      onResult: _onSpeechResult,
+      localeId: 'zh_TW', // 指定為繁體中文
+    );
+    setState(() {
+      _isListening = true;
+    });
+  }
+
+  // 停止錄音
+  void _stopListening() async {
+    await _speechToText.stop();
+    setState(() {
+      _isListening = false;
+    });
+  }
+
+  // 語音辨識結果回呼
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    setState(() {
+      // 將辨識結果附加到原本的文字後 (或取代，視需求而定，這裡採用接續)
+      // result.recognizedWords 是該次 session 的完整辨識結果
+      String newText = result.recognizedWords;
+      if (_textBeforeListening.isEmpty) {
+        _contentController.text = newText;
+      } else {
+        _contentController.text = '$_textBeforeListening $newText';
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -514,11 +623,21 @@ class _RepairPageState extends State<RepairPage> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _contentController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: '報修內容',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.description),
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.description),
                     alignLabelWithHint: true,
+                    suffixIcon: IconButton(
+                      icon: Icon(_isListening ? Icons.mic : Icons.mic_none),
+                      iconSize: 32.0, // 加大圖示
+                      color: _isListening ? Colors.red : null,
+                      tooltip: '語音輸入',
+                      onPressed: _speechEnabled
+                          ? (_isListening ? _stopListening : _startListening)
+                          : null,
+                    ),
+                    hintText: _speechEnabled ? '可點擊麥克風進行語音輸入' : null,
                   ),
                   maxLines: 5,
                   validator: (value) =>
@@ -530,13 +649,13 @@ class _RepairPageState extends State<RepairPage> {
                 Row(
                   children: [
                     ElevatedButton.icon(
-                      onPressed: _pickImages,
+                      onPressed: () => _showMediaSourceDialog(false),
                       icon: const Icon(Icons.image),
                       label: const Text('新增照片'),
                     ),
                     const SizedBox(width: 12),
                     ElevatedButton.icon(
-                      onPressed: _pickVideo,
+                      onPressed: () => _showMediaSourceDialog(true),
                       icon: const Icon(Icons.videocam),
                       label: const Text('新增影片'),
                     ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
-import 'home_page.dart';
 
 class ProjectSelectorPage extends StatefulWidget {
   const ProjectSelectorPage({super.key});
@@ -51,10 +50,7 @@ class _ProjectSelectorPageState extends State<ProjectSelectorPage> {
 
   void _onProjectSelected(Map<String, dynamic> project) {
     context.read<UserProvider>().selectProject(project);
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const HomePage()),
-      (route) => false, // Clear stack
-    );
+    // AuthCheckWrapper 會自動切換到 HomePage
   }
 
   @override
