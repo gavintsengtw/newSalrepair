@@ -58,8 +58,8 @@ mvn clean package -DskipTests
 ### 2.4 部署 (Deploy)
 1.  停止 Tomcat 服務 (`bin/shutdown.bat` 或 `bin/shutdown.sh`)。
 2.  將產生的 WAR 檔複製到 Tomcat 的 `webapps` 資料夾中。
-    *   **提示**: 將檔案重新命名為 `ROOT.war`，這樣網址路徑就會是根目錄 `/` (例如 `http://your-server.com/`)。
-    *   若不改名，網址路徑會包含檔名 (例如 `http://your-server.com/client-api-0.0.1-SNAPSHOT/`)。
+    *   **提示**: 將檔案重新命名為 `ROOT.war`，這樣網址路徑就會是根目錄 `/` (例如 `https://your-server.com/`)。
+    *   若不改名，網址路徑會包含檔名 (例如 `https://your-server.com/client-api-0.0.1-SNAPSHOT/`)。
 3.  啟動 Tomcat (`bin/startup.bat` 或 `bin/startup.sh`)。
 4.  Tomcat 會自動解壓縮 WAR 檔並啟動應用程式。
 
@@ -73,7 +73,7 @@ mvn clean package -DskipTests
 檢查 `frontend` 目錄下的 `.env` 檔案（如 `.env.android`, `.env.windows` 等），確保 API 的 URL 指向您剛剛部署的後端伺服器位址。
 
 ```env
-API_URL=http://<YOUR_SERVER_IP>:8080
+API_URL=https://<YOUR_SERVER_IP>:8080
 ```
 
 ### 3.2 編譯 (Build)

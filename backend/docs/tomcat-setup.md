@@ -59,7 +59,7 @@ This will generate a `.war` file in the `target` directory (e.g., `client-api-0.
 ## 4. Verification
 
 Access the API health check or a test endpoint:
-`http://localhost:8080/api/health` (assuming you deployed as `api.war`)
+`https://localhost:8080/api/health` (assuming you deployed as `api.war`)
 
 ## Notes for Tomcat 10 (Jakarta EE 9/10)
 Spring Boot 3.x is compatible with Tomcat 10.1 as it uses Jakarta EE 10 (jakarta.* namespace). Ensure you are NOT using older libraries that rely on `javax.*` namespace without migration.

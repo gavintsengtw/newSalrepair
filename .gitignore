@@ -27,3 +27,5 @@ Thumbs.db
 *.msi
 *.exe
 *.zip
+
+backend/src/main/resources/firebase-service-account.json

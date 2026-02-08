@@ -16,8 +16,8 @@ public class ProgressService {
                 "2023-10-25: Concrete pouring for 1F columns.",
                 "2023-10-24: Rebar inspection passed."));
         data.setPhotoUrls(Arrays.asList(
-                "http://example.com/photo1.jpg",
-                "http://example.com/photo2.jpg"));
+                "https://example.com/photo1.jpg",
+                "https://example.com/photo2.jpg"));
         return data;
     }
 }

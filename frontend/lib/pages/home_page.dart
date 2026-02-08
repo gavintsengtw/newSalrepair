@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import 'repair_page.dart';
 import 'member_page.dart';
+import 'project_selector_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -12,7 +13,37 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('豐邑客服系統'),
+        title: Consumer<UserProvider>(
+          builder: (context, provider, child) {
+            final pjno =
+                provider.currentPjno.isNotEmpty ? provider.currentPjno : '選擇案場';
+            final unit = provider.currentUnit;
+            // 如果都沒選，顯示預設標題 (但照理說會強制選)
+            final displayText =
+                (provider.currentPjno.isNotEmpty) ? '$pjno $unit' : '豐邑客服系統';
+
+            return GestureDetector(
+              onTap: () {
+                // 回到選擇頁清空選擇 (或是直接回去讓使用者重選)
+                // 這裡選擇直接跳轉ProjectSelectorPage，在裡面選擇後會覆蓋
+                provider.clearProjectSelection();
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                      builder: (_) => const ProjectSelectorPage()),
+                  (route) => false,
+                );
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(displayText, style: const TextStyle(fontSize: 18)),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.arrow_drop_down),
+                ],
+              ),
+            );
+          },
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),

@@ -16,6 +16,9 @@ public class UserController {
     @Autowired
     private PushTokenService pushTokenService;
 
+    @Autowired
+    private com.construction.client.repository.SalrepairStoreRepository salrepairStoreRepository;
+
     @PostMapping("/fcm-token")
     public ResponseEntity<?> updateFcmToken(@RequestBody FcmTokenUploadDTO request, Principal principal) {
         // 從 Spring Security 的 Principal 取得當前登入的使用者帳號
@@ -27,5 +30,17 @@ public class UserController {
         pushTokenService.updateToken(accountId, request.getToken());
 
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/projects")
+    public ResponseEntity<?> getUserProjects(Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        String accountId = principal.getName();
+        java.util.List<com.construction.client.model.SalrepairStore> projects = salrepairStoreRepository
+                .findByAccountid(accountId);
+        return ResponseEntity.ok(projects);
     }
 }

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BASE_URL="http://localhost:8080/api"
+BASE_URL="https://localhost:8080/api"
 USER_ID="user123"
 
 # Colors

@@ -14,6 +14,10 @@ class UserProvider with ChangeNotifier {
   String _pjno = "";
   String _unit = "";
   String _roles = ""; // New
+  List<dynamic> _projects = []; // List of SalrepairStore objects (maps)
+  String? _currentSid; // Selected project unique ID
+  String _currentPjno = "";
+  String _currentUnit = "";
   bool _isDefaultPassword = false; // New
   String _token = "";
   DateTime? _expiryDate;
@@ -24,8 +28,14 @@ class UserProvider with ChangeNotifier {
 
   String get account => _account;
   String get pjno => _pjno;
-  String get unit => _unit;
+
+  String get unit =>
+      _currentUnit.isNotEmpty ? _currentUnit : _unit; // Prefer selected unit
   String get roles => _roles; // New
+  List<dynamic> get projects => _projects;
+  String? get currentSid => _currentSid;
+  String get currentPjno => _currentPjno.isNotEmpty ? _currentPjno : _pjno;
+  String get currentUnit => _currentUnit.isNotEmpty ? _currentUnit : _unit;
   bool get isDefaultPassword => _isDefaultPassword; // New
   String get token => _token;
   bool get isLoggedIn => _account.isNotEmpty;
@@ -56,7 +66,11 @@ class UserProvider with ChangeNotifier {
     _expiryDate = DateTime.now().add(const Duration(hours: 24));
     _startTokenRefreshTimer();
 
-    notifyListeners();
+    await _storage.write(
+        key: 'token_expiry', value: _expiryDate!.toIso8601String());
+
+    // Fetch projects after login
+    await fetchUserProjects();
 
     await _storage.write(key: 'user_account', value: account);
     await _storage.write(key: 'auth_token', value: token);
@@ -64,8 +78,6 @@ class UserProvider with ChangeNotifier {
     await _storage.write(key: 'user_roles', value: roles);
     await _storage.write(
         key: 'user_is_default_pwd', value: isDefaultPassword.toString());
-    await _storage.write(
-        key: 'token_expiry', value: _expiryDate!.toIso8601String());
   }
 
   // 清除使用者資訊 (登出時呼叫)
@@ -78,6 +90,10 @@ class UserProvider with ChangeNotifier {
     _unit = "";
     _roles = "";
     _isDefaultPassword = false;
+    _projects = [];
+    _currentSid = null;
+    _currentPjno = "";
+    _currentUnit = "";
     notifyListeners();
 
     await _storage.delete(key: 'user_account');
@@ -98,6 +114,8 @@ class UserProvider with ChangeNotifier {
       final String? savedIsDefaultPwd =
           await _storage.read(key: 'user_is_default_pwd');
       final String? expiryStr = await _storage.read(key: 'token_expiry');
+      final String? savedSid =
+          await _storage.read(key: 'current_sid'); // Restore selected project
 
       if (savedAccount != null &&
           savedAccount.isNotEmpty &&
@@ -119,8 +137,13 @@ class UserProvider with ChangeNotifier {
         _roles = savedRoles ?? "";
         _isDefaultPassword = savedIsDefaultPwd == 'true';
         _expiryDate = expiry;
+        _currentSid = savedSid; // Restore selection
         _parseAccount();
         _startTokenRefreshTimer();
+
+        // Fetch projects to validate selection or get fresh data
+        fetchUserProjects();
+
         notifyListeners();
         return true;
       }
@@ -186,6 +209,70 @@ class UserProvider with ChangeNotifier {
       debugPrint('Token refresh failed: $e');
       logout(); // 網路錯誤或例外時登出
     }
+  }
+
+  // Fetch user projects
+  Future<void> fetchUserProjects() async {
+    try {
+      final uri = Uri.parse('$baseUrl/api/users/projects');
+      final response = await http.get(
+        uri,
+        headers: authHeaders,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        _projects = data;
+
+        if (_currentSid != null) {
+          final selected = _projects.firstWhere(
+              (p) => p['sid'].toString() == _currentSid,
+              orElse: () => null);
+          if (selected != null) {
+            selectProject(selected);
+          } else {
+            // Saved selection invalid (e.g. project removed), clear it
+            clearProjectSelection();
+          }
+        }
+
+        // B. Single Unit -> Auto Select (if not already selected)
+        if (_currentSid == null && _projects.length == 1) {
+          selectProject(_projects[0]);
+        }
+        // C. Multiple Units -> Do nothing, let UI show selector
+
+        notifyListeners();
+      } else {
+        debugPrint('Failed to fetch projects: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error fetching projects: $e');
+    }
+  }
+
+  // Select a project
+  void selectProject(Map<String, dynamic> project) async {
+    _currentSid = project['sid'].toString();
+    _currentPjno = project['pjnoid'];
+    _currentUnit = project['unoid'];
+
+    // Update legacy fields for compatibility if needed, but prefer current* fields
+    // _pjno = _currentPjno;
+    // _unit = _currentUnit;
+
+    notifyListeners();
+    // Persist selection
+    await _storage.write(key: 'current_sid', value: _currentSid);
+  }
+
+  // Clear selection to return to selector
+  void clearProjectSelection() async {
+    _currentSid = null;
+    _currentPjno = "";
+    _currentUnit = "";
+    notifyListeners();
+    await _storage.delete(key: 'current_sid');
   }
 
   // 更新密碼預設狀態 (當使用者變更密碼後呼叫)

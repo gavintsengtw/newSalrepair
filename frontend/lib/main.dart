@@ -7,6 +7,7 @@ import 'providers/user_provider.dart';
 import 'pages/login_page.dart';
 import 'pages/home_page.dart';
 import 'pages/member_page.dart';
+import 'pages/project_selector_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:io';
 
@@ -51,7 +52,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: navigatorKey, // 2. 綁定 navigatorKey
-      title: 'Construction Client',
+      title: '豐邑客服系統',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -173,6 +174,12 @@ class _AuthCheckWrapperState extends State<AuthCheckWrapper> {
     if (userProvider.isLoggedIn) {
       // 如果是預設密碼，強制跳轉到會員中心
       if (userProvider.isDefaultPassword) return const MemberPage();
+
+      // 如果尚未選擇案場，跳轉到案場選擇頁
+      if (userProvider.currentSid == null) {
+        return const ProjectSelectorPage();
+      }
+
       return const HomePage();
     }
     return const LoginPage();
