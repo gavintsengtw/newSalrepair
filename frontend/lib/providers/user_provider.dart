@@ -22,6 +22,7 @@ class UserProvider with ChangeNotifier {
   String _token = "";
   DateTime? _expiryDate;
   Timer? _logoutTimer;
+  List<dynamic>? _paymentHistoryCache; // 新增繳款紀錄快取
 
   // 建立 Secure Storage 實體
   final _storage = const FlutterSecureStorage();
@@ -60,6 +61,7 @@ class UserProvider with ChangeNotifier {
     _pjno = pjnoid;
     _roles = roles;
     _isDefaultPassword = isDefaultPassword;
+    _paymentHistoryCache = null; // 登入時重置快取
     _parseAccount(); // 解析 Unit (如果有)
 
     // 設定 Token 過期時間 (例如: 24 小時後)
@@ -83,6 +85,7 @@ class UserProvider with ChangeNotifier {
 
   // 清除使用者資訊 (登出時呼叫)
   Future<void> logout() async {
+    debugPrint("🔄 UserProvider: Logging out...");
     _logoutTimer?.cancel();
     _expiryDate = null;
     _account = "";
@@ -95,14 +98,23 @@ class UserProvider with ChangeNotifier {
     _currentSid = null;
     _currentPjno = "";
     _currentUnit = "";
-    notifyListeners();
+    _paymentHistoryCache = null; // 登出時清除快取
 
-    await _storage.delete(key: 'user_account');
-    await _storage.delete(key: 'auth_token');
-    await _storage.delete(key: 'user_pjnoid');
-    await _storage.delete(key: 'user_roles');
-    await _storage.delete(key: 'user_is_default_pwd');
-    await _storage.delete(key: 'token_expiry');
+    try {
+      await _storage.delete(key: 'user_account');
+      await _storage.delete(key: 'auth_token');
+      await _storage.delete(key: 'user_pjnoid');
+      await _storage.delete(key: 'user_roles');
+      await _storage.delete(key: 'user_is_default_pwd');
+      await _storage.delete(key: 'token_expiry');
+      await _storage.delete(key: 'current_sid');
+      debugPrint("✅ UserProvider: Storage cleared.");
+    } catch (e) {
+      debugPrint("⚠️ UserProvider: Error clearing storage: $e");
+    }
+
+    notifyListeners();
+    debugPrint("📢 UserProvider: logout notifyListeners() called.");
   }
 
   // 檢查登入狀態 (App 啟動時呼叫)
@@ -314,6 +326,38 @@ class UserProvider with ChangeNotifier {
       debugPrint('FCM Token updated successfully: $fcmToken');
     } catch (e) {
       debugPrint('Failed to update FCM token: $e');
+    }
+  }
+
+  // 取得繳款紀錄
+  Future<List<dynamic>> fetchPaymentHistory({bool forceRefresh = false}) async {
+    if (!isLoggedIn) return [];
+
+    // 若不強制重新整理且快取有資料，直接回傳快取
+    if (!forceRefresh && _paymentHistoryCache != null) {
+      return _paymentHistoryCache!;
+    }
+
+    try {
+      final uri = Uri.parse('$baseUrl/api/payment/$_account').replace(
+        queryParameters: {
+          'pjnoid': currentPjno,
+          'unoid': currentUnit,
+        },
+      );
+      debugPrint('Fetching payment history from: $uri');
+      final response = await http.get(uri, headers: authHeaders);
+
+      if (response.statusCode == 200) {
+        _paymentHistoryCache = json.decode(response.body); // 更新快取
+        return _paymentHistoryCache!;
+      } else {
+        debugPrint('Failed to fetch payment history: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      debugPrint('Error fetching payment history: $e');
+      return [];
     }
   }
 }

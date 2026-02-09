@@ -32,6 +32,9 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
     @GetMapping("/projects")
     public ResponseEntity<?> getUserProjects(Principal principal) {
         if (principal == null) {
@@ -41,6 +44,26 @@ public class UserController {
         String accountId = principal.getName();
         java.util.List<com.construction.client.model.SalrepairStore> projects = salrepairStoreRepository
                 .findByAccountid(accountId);
+
+        // Populate projectName for each project
+        for (com.construction.client.model.SalrepairStore project : projects) {
+            try {
+                String sql = "SELECT S_NAME FROM STORE WHERE S_PJNO = ?";
+                // Note: pjnoid in SalrepairStore seems to correspond to S_PJNO in STORE
+                String pjno = project.getPjnoid();
+
+                // Assuming one result or taking the first one
+                java.util.List<String> names = jdbcTemplate.query(sql, (rs, rowNum) -> rs.getString("S_NAME"), pjno);
+
+                if (!names.isEmpty()) {
+                    project.setProjectName(names.get(0));
+                }
+            } catch (Exception e) {
+                // Log error but continue, leaving projectName as null
+                e.printStackTrace();
+            }
+        }
+
         return ResponseEntity.ok(projects);
     }
 }

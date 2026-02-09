@@ -1,31 +1,47 @@
 package com.construction.client.service;
 
-import com.construction.client.dto.PaymentInfoDTO;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import org.springframework.stereotype.Service;
-import java.util.Arrays;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 public class PaymentService {
 
-    public PaymentInfoDTO getPaymentInfo(String userId) {
-        // Mock Data
-        PaymentInfoDTO data = new PaymentInfoDTO();
-        data.setContractId("CN-2023-001");
-        data.setRemittanceInfo("Bank: 001, Account: 1234567890");
+    private final RestTemplate restTemplate;
 
-        PaymentInfoDTO.PaymentDetail d1 = new PaymentInfoDTO.PaymentDetail();
-        d1.setTermName("Signing Fee");
-        d1.setAmount(100000.0);
-        d1.setStatus("PAID");
-        d1.setDueDate("2023-01-01");
+    public PaymentService() {
+        this.restTemplate = new RestTemplate();
+    }
 
-        PaymentInfoDTO.PaymentDetail d2 = new PaymentInfoDTO.PaymentDetail();
-        d2.setTermName("1st Installment");
-        d2.setAmount(50000.0);
-        d2.setStatus("UNPAID");
-        d2.setDueDate("2023-11-01");
+    public List<Map<String, Object>> getPaymentInfo(String userId, String pjnoid, String unoid) {
+        if (pjnoid == null || pjnoid.isEmpty() || unoid == null || unoid.isEmpty()) {
+            // Log warning or throw error
+            System.out.println("Warning: pjnoid or unoid is null or empty for payment query");
+            return Collections.emptyList();
+        }
 
-        data.setPaymentDetails(Arrays.asList(d1, d2));
-        return data;
+        String url = String.format(
+                "https://bpm.fong-yi.com.tw/servlet/jform?file=fy_wsSAL.pkg&buttonid=getUnoInvList&salStord=%s&salUno=%s&salCno=%s",
+                pjnoid, unoid, userId);
+
+        try {
+            // Response is expected to be a JSON array of objects
+            ResponseEntity<List<Map<String, Object>>> responseEntity = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                    });
+            List<Map<String, Object>> response = responseEntity.getBody();
+            return response != null ? response : Collections.emptyList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Collections.emptyList();
+        }
     }
 }

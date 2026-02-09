@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -13,8 +14,10 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _accountController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _accountController =
+      TextEditingController(text: kDebugMode ? 'i00104' : '');
+  final _passwordController =
+      TextEditingController(text: kDebugMode ? '1qaz2wsx' : '');
   bool _isLoading = false;
 
   // 移除本地 _baseUrl getter，改用 UserProvider

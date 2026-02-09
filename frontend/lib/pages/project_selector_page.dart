@@ -62,15 +62,21 @@ class _ProjectSelectorPageState extends State<ProjectSelectorPage> {
     final Map<String, List<dynamic>> groupedProjects = {};
     for (var project in projects) {
       final pjno = project['pjnoid'] ?? 'Unknown';
-      if (!groupedProjects.containsKey(pjno)) {
-        groupedProjects[pjno] = [];
+      // Use projectName if available
+      final pjnName = project['projectName'];
+      final headerTitle = pjnName != null && pjnName.toString().isNotEmpty
+          ? '$pjno $pjnName'
+          : pjno;
+
+      if (!groupedProjects.containsKey(headerTitle)) {
+        groupedProjects[headerTitle] = [];
       }
-      groupedProjects[pjno]!.add(project);
+      groupedProjects[headerTitle]!.add(project);
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('請選擇服務案場'),
+        title: const Text('請選擇服務社區'),
         centerTitle: true,
       ),
       body: _isLoading
@@ -81,8 +87,8 @@ class _ProjectSelectorPageState extends State<ProjectSelectorPage> {
                   padding: const EdgeInsets.all(16),
                   itemCount: groupedProjects.length,
                   itemBuilder: (context, index) {
-                    final pjno = groupedProjects.keys.elementAt(index);
-                    final projectList = groupedProjects[pjno]!;
+                    final headerTitle = groupedProjects.keys.elementAt(index);
+                    final projectList = groupedProjects[headerTitle]!;
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,7 +97,7 @@ class _ProjectSelectorPageState extends State<ProjectSelectorPage> {
                           padding: const EdgeInsets.symmetric(
                               vertical: 8.0, horizontal: 4.0),
                           child: Text(
-                            '案場: $pjno',
+                            '社區: $headerTitle',
                             style: Theme.of(context)
                                 .textTheme
                                 .titleLarge

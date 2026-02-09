@@ -512,6 +512,35 @@ class _RepairPageState extends State<RepairPage> {
     });
   }
 
+  Future<void> _handleSpeechButtonPress() async {
+    if (_isListening) {
+      _stopListening();
+      return;
+    }
+
+    if (!_speechEnabled) {
+      // 嘗試初始化 (Lazy Initialization)
+      bool available = await _speechToText.initialize(
+        onError: (val) => debugPrint('STT Error: $val'),
+        onStatus: (val) => debugPrint('STT Status: $val'),
+      );
+      if (available) {
+        setState(() {
+          _speechEnabled = true;
+        });
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('語音辨識啟動失敗，請檢查麥克風權限或瀏覽器設定')),
+          );
+        }
+        return;
+      }
+    }
+
+    _startListening();
+  }
+
   // 語音辨識結果回呼
   void _onSpeechResult(SpeechRecognitionResult result) {
     setState(() {
@@ -630,14 +659,14 @@ class _RepairPageState extends State<RepairPage> {
                     alignLabelWithHint: true,
                     suffixIcon: IconButton(
                       icon: Icon(_isListening ? Icons.mic : Icons.mic_none),
-                      iconSize: 32.0, // 加大圖示
-                      color: _isListening ? Colors.red : null,
+                      iconSize: 32.0,
+                      color: _isListening
+                          ? Colors.red
+                          : (_speechEnabled ? Colors.blue : Colors.grey),
                       tooltip: '語音輸入',
-                      onPressed: _speechEnabled
-                          ? (_isListening ? _stopListening : _startListening)
-                          : null,
+                      onPressed: _handleSpeechButtonPress,
                     ),
-                    hintText: _speechEnabled ? '可點擊麥克風進行語音輸入' : null,
+                    hintText: '可點擊麥克風進行語音輸入',
                   ),
                   maxLines: 5,
                   validator: (value) =>

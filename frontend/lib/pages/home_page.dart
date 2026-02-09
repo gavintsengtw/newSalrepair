@@ -5,6 +5,9 @@ import '../providers/user_provider.dart';
 import 'repair_page.dart';
 import 'member_page.dart';
 
+import 'payment_query_page.dart';
+import 'progress_date_selector_page.dart';
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -101,7 +104,7 @@ class HomePage extends StatelessWidget {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        _buildPlaceholderPage('工程進度'),
+                                        const ProgressDateSelectorPage(),
                                   ),
                                 );
                               },
@@ -116,7 +119,7 @@ class HomePage extends StatelessWidget {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        _buildPlaceholderPage('繳款查詢'),
+                                        const PaymentQueryPage(),
                                   ),
                                 );
                               },
@@ -165,13 +168,6 @@ class HomePage extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildPlaceholderPage(String title) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(child: Text('$title - 功能開發中')),
     );
   }
 

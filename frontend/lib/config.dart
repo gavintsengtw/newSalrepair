@@ -26,7 +26,7 @@ class AppConfig {
     if (envUrl != null && envUrl.isNotEmpty) return envUrl;
 
     // 3. Fallback for Local Dev (Android Emulator / Desktop)
-    String url = 'https://10.0.2.2:8080';
+    String url = 'http://10.0.2.2:8080';
     return url;
   }
 

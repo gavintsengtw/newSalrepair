@@ -41,4 +41,7 @@ public class SalrepairStore {
 
     @Column(name = "MDFDTE")
     private LocalDateTime mdfDte;
+
+    @Transient
+    private String projectName;
 }

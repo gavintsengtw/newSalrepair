@@ -10,6 +10,8 @@ import 'pages/member_page.dart';
 import 'pages/project_selector_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:io';
+import 'helpers/proxy_helper.dart'
+    if (dart.library.js_interop) 'helpers/proxy_helper_web.dart';
 
 // 1. 定義全域導航 Key，用於在任何地方控制導航
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -29,6 +31,7 @@ Future<void> main() async {
         envFile = ".env.ios";
       }
       await dotenv.load(fileName: envFile);
+      setupProxy(); // Configure proxy if set in .env
     } catch (e) {
       debugPrint("❌ Error loading .env file: $e");
     }
@@ -172,13 +175,16 @@ class _AuthCheckWrapperState extends State<AuthCheckWrapper> {
     }
     // 使用 context.watch 監聽 UserProvider，當 isLoggedIn 改變時自動切換頁面
     final userProvider = context.watch<UserProvider>();
+    final isLoggedIn = userProvider.isLoggedIn;
+    final currentSid = userProvider.currentSid;
 
-    if (userProvider.isLoggedIn) {
-      // 如果是預設密碼，強制跳轉到會員中心
+    debugPrint(
+        "🛠️ AuthCheckWrapper: Build (isLoggedIn: $isLoggedIn, currentSid: $currentSid)");
+
+    if (isLoggedIn) {
       if (userProvider.isDefaultPassword) return const MemberPage();
 
-      // 如果尚未選擇案場，跳轉到案場選擇頁
-      if (userProvider.currentSid == null) {
+      if (currentSid == null) {
         return const ProjectSelectorPage();
       }
 
