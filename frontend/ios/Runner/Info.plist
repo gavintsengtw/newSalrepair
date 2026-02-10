@@ -26,6 +26,14 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>需要存取您的相機以拍攝報修照片</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>需要存取麥克風以錄製報修影片聲音及語音輸入</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>需要存取您的相簿以選取報修照片或影片</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>需要使用語音辨識功能將您的語音轉為文字</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -45,13 +53,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>需要存取您的相簿以選取報修照片或影片</string>
-	<key>NSCameraUsageDescription</key>
-	<string>需要存取您的相機以拍攝報修照片</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>需要存取麥克風以錄製報修影片聲音及語音輸入</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>需要使用語音辨識功能將您的語音轉為文字</string>
 </dict>
 </plist>
