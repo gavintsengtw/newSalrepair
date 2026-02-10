@@ -17,14 +17,15 @@ class InboxProvider with ChangeNotifier {
   int get unreadCount => _messages.where((msg) => !msg.isRead).length;
 
   Future<void> fetchMessages() async {
-    if (_userProvider == null || !_userProvider!.isLoggedIn) return;
+    final userProvider = _userProvider;
+    if (userProvider == null || !userProvider.isLoggedIn) return;
 
     _isLoading = true;
     notifyListeners();
 
     try {
-      final uri = Uri.parse('${_userProvider!.baseUrl}/api/inbox');
-      final response = await http.get(uri, headers: _userProvider!.authHeaders);
+      final uri = Uri.parse('${userProvider.baseUrl}/api/inbox');
+      final response = await http.get(uri, headers: userProvider.authHeaders);
 
       if (response.statusCode == 200) {
         // 使用 utf8.decode 處理中文字元
