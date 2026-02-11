@@ -21,6 +21,9 @@ public class AuthController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private com.construction.client.service.AppUserRoleService appUserRoleService;
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest) {
         String accountid = loginRequest.get("accountid");
@@ -33,16 +36,23 @@ public class AuthController {
         User user = userService.login(accountid, password);
 
         if (user != null) {
-            String token = jwtUtil.generateToken(user.getAccountid(), user.getRoles());
-            
+            // Fetch dynamic roles from AppUserRole table
+            java.util.List<com.construction.client.entity.AppUserRole> userRoles = appUserRoleService
+                    .findByUserId(user.getUid());
+            String roles = userRoles.stream()
+                    .map(ur -> ur.getRole().getRoleName())
+                    .collect(java.util.stream.Collectors.joining(","));
+
+            String token = jwtUtil.generateToken(user.getAccountid(), roles);
+
             // Build response
             Map<String, Object> response = new HashMap<>();
             response.put("token", token);
             response.put("accountid", user.getAccountid());
-            response.put("roles", user.getRoles());
+            response.put("roles", roles);
             response.put("pjnoid", user.getPjnoid());
             response.put("isDefaultPassword", user.getIsDefaultPassword());
-            
+
             return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.status(401).body("Invalid credentials");

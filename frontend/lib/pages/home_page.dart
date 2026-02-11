@@ -4,9 +4,11 @@ import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import 'repair_page.dart';
 import 'member_page.dart';
+import 'system_management_page.dart';
 
 import 'payment_query_page.dart';
 import 'progress_date_selector_page.dart';
+import '../helpers/icon_mapper.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -82,83 +84,28 @@ class HomePage extends StatelessWidget {
                       // 設定斷點：寬度 > 800 顯示 4 列，否則顯示 2 列
                       final int crossAxisCount = width > 800 ? 4 : 2;
 
-                      final rolesString = context.watch<UserProvider>().roles;
-                      // 解析角色字串為列表，避免字串包含導致的誤判 (如 AFTER_SALES 包含 SALES)
-                      final roles =
-                          rolesString.split(',').map((e) => e.trim()).toList();
+                      final menus = context.watch<UserProvider>().menus;
 
-                      return GridView.count(
-                        crossAxisCount: crossAxisCount,
-                        mainAxisSpacing: 24,
-                        crossAxisSpacing: 24,
-                        childAspectRatio: width > 800 ? 1.2 : 1.0,
-                        children: [
-                          if (roles.contains('SALES')) ...[
-                            _buildMenuButton(
-                              context,
-                              '工程進度',
-                              Icons.construction,
-                              Colors.orange,
-                              () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const ProgressDateSelectorPage(),
-                                  ),
-                                );
-                              },
-                            ),
-                            _buildMenuButton(
-                              context,
-                              '繳款查詢',
-                              Icons.receipt_long,
-                              Colors.blue,
-                              () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const PaymentQueryPage(),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                          if (roles.contains('AFTER_SALES')) ...[
-                            _buildMenuButton(
-                              context,
-                              '報修服務',
-                              Icons.handyman,
-                              Colors.green,
-                              () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const RepairPage(),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                          if (roles.contains('SALES') ||
-                              roles.contains('AFTER_SALES')) ...[
-                            _buildMenuButton(
-                              context,
-                              '會員中心',
-                              Icons.person,
-                              Colors.purple,
-                              () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const MemberPage(),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ],
+                      return GridView.builder(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          mainAxisSpacing: 24,
+                          crossAxisSpacing: 24,
+                          childAspectRatio: width > 800 ? 1.2 : 1.0,
+                        ),
+                        itemCount: menus.length,
+                        itemBuilder: (context, index) {
+                          final menu = menus[index];
+                          return _buildMenuButton(
+                            context,
+                            menu['name'],
+                            IconMapper.getIcon(menu['icon']),
+                            _getColorForMenu(menu['code']),
+                            () {
+                              _navigateTo(context, menu['route']);
+                            },
+                          );
+                        },
                       );
                     }),
                   ),
@@ -205,5 +152,101 @@ class HomePage extends StatelessWidget {
         ),
       ),
     ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack);
+  }
+
+  Color _getColorForMenu(String code) {
+    switch (code) {
+      case 'PROGRESS':
+        return Colors.orange;
+      case 'PAYMENT':
+        return Colors.blue;
+      case 'REPAIR':
+        return Colors.green;
+      case 'SYS_MGMT':
+      case 'SYSTEM':
+        return Colors.blueGrey;
+      case 'MEMBER':
+      case 'CHANGE_PWD':
+      case 'ACCOUNT_MGMT':
+        return Colors.purple;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  void _navigateTo(BuildContext context, String route) {
+    switch (route) {
+      case '/progress':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ProgressDateSelectorPage(),
+          ),
+        );
+        break;
+      case '/payment':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const PaymentQueryPage(),
+          ),
+        );
+        break;
+      case '/system': // Route for SYS_MGMT
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  const SystemManagementPage(initialIndex: 0)),
+        );
+        break;
+      case '/system/functions':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  const SystemManagementPage(initialIndex: 0)),
+        );
+        break;
+      case '/system/roles':
+      case '/system/permissions': // Handle both potential routes
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  const SystemManagementPage(initialIndex: 1)),
+        );
+        break;
+      case '/system/users':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  const SystemManagementPage(initialIndex: 2)),
+        );
+        break;
+      case '/repair':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const RepairPage(),
+          ),
+        );
+        break;
+      case '/member':
+      case '/account':
+      case '/profile/password': // Backward compatibility
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const MemberPage(),
+          ),
+        );
+        break;
+      default:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unknown route: $route')),
+        );
+    }
   }
 }

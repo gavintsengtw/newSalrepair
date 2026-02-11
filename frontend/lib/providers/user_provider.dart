@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import '../services/api_service.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -23,6 +24,7 @@ class UserProvider with ChangeNotifier {
   DateTime? _expiryDate;
   Timer? _logoutTimer;
   List<dynamic>? _paymentHistoryCache; // 新增繳款紀錄快取
+  List<dynamic> _menus = []; // Store dynamic menus
 
   // 建立 Secure Storage 實體
   final _storage = const FlutterSecureStorage();
@@ -33,6 +35,7 @@ class UserProvider with ChangeNotifier {
   String get unit =>
       _currentUnit.isNotEmpty ? _currentUnit : _unit; // Prefer selected unit
   String get roles => _roles; // New
+  List<dynamic> get menus => _menus;
   List<dynamic> get projects => _projects;
   String? get currentSid => _currentSid;
   String get currentPjno => _currentPjno.isNotEmpty ? _currentPjno : _pjno;
@@ -64,6 +67,9 @@ class UserProvider with ChangeNotifier {
     _paymentHistoryCache = null; // 登入時重置快取
     _parseAccount(); // 解析 Unit (如果有)
 
+    // Update ApiService token
+    ApiService().setToken(token);
+
     // 設定 Token 過期時間 (例如: 24 小時後)
     _expiryDate = DateTime.now().add(const Duration(hours: 24));
     _startTokenRefreshTimer();
@@ -73,6 +79,7 @@ class UserProvider with ChangeNotifier {
 
     // Fetch projects after login
     await fetchUserProjects();
+    await fetchUserMenus();
 
     // Disable persistence for "Login on App Restart" requirement
     // await _storage.write(key: 'user_account', value: account);
@@ -99,6 +106,9 @@ class UserProvider with ChangeNotifier {
     _currentPjno = "";
     _currentUnit = "";
     _paymentHistoryCache = null; // 登出時清除快取
+
+    // Clear ApiService token
+    ApiService().setToken(null);
 
     try {
       await _storage.delete(key: 'user_account');
@@ -358,6 +368,29 @@ class UserProvider with ChangeNotifier {
     } catch (e) {
       debugPrint('Error fetching payment history: $e');
       return [];
+    }
+  }
+
+  // Fetch user menus
+  Future<void> fetchUserMenus() async {
+    try {
+      final uri = Uri.parse('$baseUrl/api/v1/user/menus');
+      final response = await http.get(
+        uri,
+        headers: authHeaders,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['status'] == 'success') {
+          _menus = data['data']['menus'];
+          notifyListeners();
+        }
+      } else {
+        debugPrint('Failed to fetch menus: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error fetching menus: $e');
     }
   }
 }

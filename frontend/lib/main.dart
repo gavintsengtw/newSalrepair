@@ -6,8 +6,15 @@ import 'package:provider/provider.dart';
 import 'providers/user_provider.dart';
 import 'pages/login_page.dart';
 import 'pages/home_page.dart';
-import 'pages/member_page.dart';
+
+import 'pages/change_password_page.dart';
 import 'pages/project_selector_page.dart';
+import 'pages/member_page.dart';
+import 'pages/progress_date_selector_page.dart';
+import 'pages/payment_query_page.dart';
+import 'pages/repair_page.dart';
+import 'pages/system_management_page.dart';
+import 'pages/privacy_policy_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:io';
 import 'helpers/proxy_helper.dart'
@@ -100,6 +107,25 @@ class MyApp extends StatelessWidget {
         return AuthListener(child: child!);
       },
       home: const AuthCheckWrapper(),
+      routes: {
+        '/login': (context) => const LoginPage(),
+        '/home': (context) => const HomePage(),
+        '/member': (context) => const MemberPage(),
+        '/member/account': (context) => const ChangePasswordPage(),
+        '/profile/password': (context) =>
+            const ChangePasswordPage(), // Backward compatibility
+        '/progress': (context) => const ProgressDateSelectorPage(),
+        '/project/engineering': (context) =>
+            const ProgressDateSelectorPage(), // Alias
+        '/payment': (context) => const PaymentQueryPage(),
+        '/project/payment': (context) => const PaymentQueryPage(), // Alias
+        '/repair': (context) => const RepairPage(),
+        '/project/repair': (context) => const RepairPage(), // Alias
+        '/system': (context) => const SystemManagementPage(),
+        '/system/management': (context) =>
+            const SystemManagementPage(), // Alias
+        '/privacy': (context) => const PrivacyPolicyPage(),
+      },
     );
   }
 }
@@ -182,7 +208,7 @@ class _AuthCheckWrapperState extends State<AuthCheckWrapper> {
         "🛠️ AuthCheckWrapper: Build (isLoggedIn: $isLoggedIn, currentSid: $currentSid)");
 
     if (isLoggedIn) {
-      if (userProvider.isDefaultPassword) return const MemberPage();
+      if (userProvider.isDefaultPassword) return const ChangePasswordPage();
 
       if (currentSid == null) {
         return const ProjectSelectorPage();

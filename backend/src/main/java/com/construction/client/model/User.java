@@ -25,9 +25,6 @@ public class User {
     @Column(name = "IsDefaultPassword")
     private Boolean isDefaultPassword;
 
-    @Column(name = "roles")
-    private String roles;
-
     @Column(name = "pjnoid")
     private String pjnoid;
 }

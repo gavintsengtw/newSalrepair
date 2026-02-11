@@ -15,9 +15,9 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _accountController =
-      TextEditingController(text: kDebugMode ? 'i00104' : '');
+      TextEditingController(text: kDebugMode ? 'admin' : '');
   final _passwordController =
-      TextEditingController(text: kDebugMode ? '1qaz2wsx' : '');
+      TextEditingController(text: kDebugMode ? 'admin123' : '');
   bool _isLoading = false;
 
   // 移除本地 _baseUrl getter，改用 UserProvider
@@ -153,6 +153,13 @@ class _LoginPageState extends State<LoginPage> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Text('登入'),
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/privacy');
+                    },
+                    child: const Text('隱私權政策'),
                   ),
                 ],
               ),

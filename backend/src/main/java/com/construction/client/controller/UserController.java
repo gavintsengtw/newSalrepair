@@ -66,4 +66,40 @@ public class UserController {
 
         return ResponseEntity.ok(projects);
     }
+
+    @Autowired
+    private com.construction.client.service.UserService userService;
+
+    @GetMapping
+    public java.util.List<com.construction.client.model.User> getAllUsers() {
+        return userService.getAllUsers();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<com.construction.client.model.User> getUserById(@PathVariable Long id) {
+        return userService.getUserById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/create")
+    public com.construction.client.model.User createUser(@RequestBody com.construction.client.model.User user) {
+        return userService.createUser(user);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<com.construction.client.model.User> updateUser(@PathVariable Long id,
+            @RequestBody com.construction.client.model.User userDetails) {
+        try {
+            return ResponseEntity.ok(userService.updateUser(id, userDetails));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.ok().build();
+    }
 }
