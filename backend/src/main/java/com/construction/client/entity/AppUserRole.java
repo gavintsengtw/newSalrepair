@@ -15,6 +15,7 @@ public class AppUserRole {
     @ManyToOne
     @MapsId("userId")
     @JoinColumn(name = "UserID")
+    @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
     private User user;
 
     @ManyToOne

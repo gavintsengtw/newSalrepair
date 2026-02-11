@@ -54,6 +54,10 @@ public class AppUserRoleService {
     }
 
     public List<AppUserRole> findAll() {
-        return userRoleRepository.findAll();
+        List<AppUserRole> allRoles = userRoleRepository.findAll();
+        // remove orphaned roles where user or role is null
+        allRoles.removeIf(ur -> ur.getUser() == null || ur.getRole() == null);
+        return allRoles;
     }
+
 }

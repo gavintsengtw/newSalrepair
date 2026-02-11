@@ -23,13 +23,7 @@ class FunctionService {
   }
 
   Future<void> updateFunction(AppFunction function) async {
-    // Assuming PUT /api/functions/{id} or PUT /api/functions with ID in body
-    // Let's assume standard REST: PUT /api/functions/{id}
-    // BUT the prompt said PUT /api/functions
-    // I'll stick to PUT /api/functions for now as requested, but usually ID is in URL
-
-    // Option A: PUT /api/functions (ID in body)
-    await _api.put(_endpoint, function.toJson());
+    await _api.put('$_endpoint/${function.id}', function.toJson());
   }
 
   Future<void> deleteFunction(int id) async {
