@@ -105,7 +105,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
           Container(
             padding: const EdgeInsets.all(8.0),
             color: _isSelectionMode
-                ? Theme.of(context).primaryColor.withOpacity(0.1)
+                ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
                 : null,
             child: Row(
               children: [
@@ -161,7 +161,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
 
                 return Card(
                   color: isSelected
-                      ? Theme.of(context).primaryColor.withOpacity(0.05)
+                      ? Theme.of(context).primaryColor.withValues(alpha: 0.05)
                       : null,
                   child: ListTile(
                     leading: Checkbox(
