@@ -14,6 +14,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 
 import java.util.Arrays;
 
@@ -59,6 +60,13 @@ public class SecurityConfig {
                                 "/flutter_bootstrap.js",
                                 "/assets/**", "/canvaskit/**", "/icons/**",
                                 "/*.js", "/*.css", "/*.json", "/*.wasm", "/*.png", "/*.jpg", "/*.ico");
+        }
+
+        @Bean
+        public FilterRegistrationBean<JwtAuthenticationFilter> registration(JwtAuthenticationFilter filter) {
+                FilterRegistrationBean<JwtAuthenticationFilter> registration = new FilterRegistrationBean<>(filter);
+                registration.setEnabled(false);
+                return registration;
         }
 
         @Bean

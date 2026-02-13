@@ -51,7 +51,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 logger.error("Error extracting username from JWT", e);
             }
         } else {
-            logger.warn("Authorization header is missing or does not start with Bearer");
+            logger.debug("Authorization header is missing or does not start with Bearer. Request URI: {}",
+                    request.getRequestURI());
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {

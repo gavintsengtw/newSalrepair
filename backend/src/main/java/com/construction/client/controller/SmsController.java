@@ -28,10 +28,10 @@ public class SmsController {
             @RequestParam String statusstr,
             @RequestParam String StatusFlag) {
 
-        // System.out.println("Received SMS Callback: " + LocalDateTime.now());
-        // System.out.println("msgid: " + msgid);
-        // System.out.println("dstaddr: " + dstaddr);
-        // System.out.println("statusstr: " + statusstr);
+        System.out.println("Received SMS Callback: " + java.time.LocalDateTime.now());
+        System.out.println("msgid: " + msgid);
+        System.out.println("dstaddr: " + dstaddr);
+        System.out.println("statusstr: " + statusstr);
 
         SendSmsResponse data = new SendSmsResponse();
         data.setMsgid(msgid);

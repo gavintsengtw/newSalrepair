@@ -21,23 +21,34 @@ public class SmsService {
      * 如果 msgid 存在則更新，否則新增
      */
     public void updateSmsStatus(SendSmsResponse data) {
-        String sqlCheck = "SELECT COUNT(*) FROM sendSmsResponse WHERE msgid = ?";
-        Integer count = jdbcTemplate.queryForObject(sqlCheck, Integer.class, data.getMsgid());
+        String originalMsgid = data.getMsgid();
+        if (originalMsgid == null)
+            return;
+
+        String msgidTrimmed = originalMsgid.trim();
+
+        // Strictly ensure # prefix (per user requirement: DB has #, incoming report has
+        // #)
+        String targetMsgId = msgidTrimmed.startsWith("#") ? msgidTrimmed : "#" + msgidTrimmed;
+
+        String checkSql = "SELECT COUNT(*) FROM sendSmsResponse WHERE msgid = ?";
+        Integer count = jdbcTemplate.queryForObject(checkSql, Integer.class, targetMsgId);
 
         if (count != null && count > 0) {
-            // 更新
+            // Update existing record
             String sqlUpdate = "UPDATE sendSmsResponse SET dstaddr = ?, dlvtime = ?, donetime = ?, statuscode = ?, statusstr = ?, statusFlag = ? WHERE msgid = ?";
             jdbcTemplate.update(sqlUpdate,
                     data.getDstaddr(), data.getDlvtime(), data.getDonetime(),
                     data.getStatuscode(), data.getStatusstr(), data.getStatusFlag(),
-                    data.getMsgid());
+                    targetMsgId); // Use the found targetMsgId
         } else {
-            // 新增
-            String sqlInsert = "INSERT INTO sendSmsResponse (uid, msgid, dstaddr, dlvtime, donetime, statuscode, statusstr, statusFlag, crddte, statuscode1) " +
+            // Insert new record (fallback)
+            String sqlInsert = "INSERT INTO sendSmsResponse (uid, msgid, dstaddr, dlvtime, donetime, statuscode, statusstr, statusFlag, crddte, statuscode1) "
+                    +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), ?)";
-            // statuscode1 logic unknown from request, leveraging default similar field or "1" as example in JSON
+
             jdbcTemplate.update(sqlInsert,
-                    UUID.randomUUID().toString(), data.getMsgid(), data.getDstaddr(),
+                    UUID.randomUUID().toString(), targetMsgId, data.getDstaddr(),
                     data.getDlvtime(), data.getDonetime(), data.getStatuscode(),
                     data.getStatusstr(), data.getStatusFlag(), "1");
         }

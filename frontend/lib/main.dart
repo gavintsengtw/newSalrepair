@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'services/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
@@ -39,8 +41,15 @@ Future<void> main() async {
       }
       await dotenv.load(fileName: envFile);
       setupProxy(); // Configure proxy if set in .env
+
+      // Initialize Firebase
+      await Firebase.initializeApp();
+
+      // Initialize Notification Service
+      final notificationService = NotificationService();
+      await notificationService.initialize();
     } catch (e) {
-      debugPrint("❌ Error loading .env file: $e");
+      debugPrint("❌ Error initializing app: $e");
     }
 
     runApp(

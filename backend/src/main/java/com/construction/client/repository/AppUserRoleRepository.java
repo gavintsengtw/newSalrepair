@@ -11,4 +11,6 @@ import java.util.List;
 public interface AppUserRoleRepository extends JpaRepository<AppUserRole, AppUserRoleId> {
     List<AppUserRole> findByUser_Uid(Long uid);
 
+    @org.springframework.data.jpa.repository.Query("SELECT ar FROM AppUserRole ar JOIN ar.user u JOIN ar.role r")
+    List<AppUserRole> findAllValidRoles();
 }
